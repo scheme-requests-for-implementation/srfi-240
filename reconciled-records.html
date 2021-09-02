@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>SRFI ###: Reconciled Records</title>
+    <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
+    <link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1"></head>
+  <body>
+    <h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI surfboard logo" /></a>###: Reconciled Records</h1>
+
+    <p>by Marc Nieper-Wißkirchen</p>
+
+    <h2 id="status">Status</h2>
+
+    <p>??? the draft/final/withdrawn status of the SRFI, information on how
+      to subscribe to its mailing list, and important dates in its history.
+      The editor will add this section.</p>
+
+    <h2 id="abstract">Abstract</h2>
+
+    <p>This SRFI defines a version of
+      the <code>define-record-type</code> definition
+      of <code>R<sup>6</sup>RS</code> that extends
+      the <code>define-record-type</code> syntax
+      of <code>R<sup>7</sup>RS</code>, reconciling both systems.</p>
+
+    <h2 id="issues">Issues</h2>
+
+    <p>None at present.</p>
+
+    <h2 id="rationale">Rationale</h2>
+
+    <p>In contrast to R<sup>6</sup>RS, the Scheme standard
+      R<sup>7</sup>RS does not yet have record types that can be
+      extended via single inheritence, can be defined procedurally, or
+      can be inspected.  Several proposals, including SRFI 99, SRFI
+      131, SRFI 136, and SRFI 150, have been made to add such record
+      types to R<sup>7</sup>RS.  Each of these proposals, however, is
+      lacking in at least one of the following areas:</p>
+
+    <ul>
+      <li>
+        <p>The proposed syntax and/or semantics are new and untested in
+          the large.</p>
+      </li>
+      <li>
+        <p>The proposed semantics is not compatible with
+          R<sup>7</sup>RS field names interpreted as (hygienic)
+          identifiers.</p>
+      </li>
+      <li>
+        <p>The proposed semantics are not reconciled with
+          R<sup>6</sup>RS.</p>
+      </li>
+    </ul>
+
+    <p>This SRFI therefore proposes to adopt the established and
+      widely used R<sup>6</sup>RS record system for R<sup>7</sup>RS.
+      For this, the <code>define-record-type</code> form of R<sup>7</sup>RS is extended (see below).</p>
+
+    <p>The advantages of this proposal include the following:</p>
+
+    <ul>
+      <li>
+        <p>R<sup>7</sup>RS gets a record-type facility as powerful
+          as the R<sup>6</sup>RS record-type facility including
+          single-inheritance, a procedural interface, and
+          inspection.</p>
+      </li>
+      <li>
+        <p>Porting code and sharing specifications between R<sup>6</sup>RS and R<sup>7</sup>RS becomes simplified.</p>
+      </li>
+      <li>
+        <p>Scheme systems supporting both R<sup>6</sup>RS and
+          R<sup>7</sup>RS need only one implementation of record types.</p>
+      </li>
+      <li>
+        <p>In principle, the proposal works with the SRFI 9 record
+          field names interpreted as identifiers or as symbols.</p>
+      </li>
+      <li>
+        <p>The record-type facility is known and tested in the large.</p>
+      </li>
+    </ul>
+
+    <p><i>Note:</i> Objections against the R<sup>6</sup>RS record
+      system were were voiced by people voting against ratification of
+      that standard's latest candidate draft.  These objections
+      touched the complexity, the role of the procedural layer, and
+      the compatibility between the syntactic and the procedural layer
+      of the R<sup>6</sup>RS record system.  These objections can be addressed as follows:</p>
+
+    <ul>
+      <li>
+        <p>While the complexity of the record system would have
+          exceeded the scope and size of R<sup>7</sup>RS-small, it
+          fits the scope and size of R<sup>7</sup>RS-large.</p>
+      </li>
+      <li>
+        <p>The procedural layer is intended to be used when record
+          types have to be constructed at runtime, e.g. by
+          interpreters that need to construct host-compatible record
+          types.  The procedural layer much like the inspection layer
+          is therefore not needed for most code.</p>
+      </li>
+      <li>
+        <p>The syntactic and the procedural layer are compatible and a
+          syntactically defined record type can inherit from a
+          procedurally defined record type, and vice versa.  Whether a
+          record type has been defined syntactically or procedurally
+          is generally unobservable.  To inherit from a record type
+          all that has to be exposed from it is either the (bound)
+          record name or the record type descriptor (with or without a
+          record constructor descriptor).</p>
+      </li>
+    </ul>
+
+    <h2 id="specification">Specification</h2>
+
+    <h3>Syntax</h3>
+
+    <p>The syntax described in this section is provided by
+      the <code>(srfi ###)</code> library on R<sup>7</sup>RS systems,
+      and the <code>(srfi :###)</code> and <code>(srfi :###
+        define-record-type)</code> libraries on R<sup>6</sup>RS systems.</p>
+
+    <p>The libraries also export the auxiliary
+      syntax <code>fields</code>, <code>mutable</code>, <code>immutable</code>, <code>parent</code>, <code>protocol</code>, <code>sealed</code>, <code>opaque</code>, <code>nongenerative</code>, <code>parent-rtd</code>.</p>
+
+    <p>An R<sup>7</sup>RS system may provide
+      the <code>define-record-type</code> syntax also by <code>(scheme
+      base)</code>.</p>
+
+    <p><code>(define-record-type &lang;name spec&rang; &lang;record clause&rang; &hellip;)</code></p>
+
+    <p><i>Syntax:</i> This syntax is identical to the syntax of the
+      record-type-defining form <code>define-record-type</code>
+      exported by <code>(rnrs records syntactic (6))</code>.</p>
+
+    <p><i>Semantics:</i>
+      This definition is equivalent to the record-type-defining
+      form <code>define-record-type</code> exported by <code>(rnrs
+        records syntactic (6))</code>.</p>
+
+    <p><code>(define-record-type &lang;name&rang;
+        (&lang;constructor name&rang; &lang;field name&rang; &hellip;)
+        &lang;pred&rang; &lang;field&rang; &hellip;)</code></p>
+
+    <p><i>Syntax:</i>
+      <code>&lang;Name&rang;</code>, <code>&lang;constructor
+      name&rang;</code>, <code>&lang;pred&rang;</code> are
+      identifiers, each <code>&lang;field&rang;</code> is of the
+      form <code>(&lang;field name&rang; &lang;accessor
+      name&rang;)</code> or <code>(&lang;field name&rang;
+      &lang;accessor name&rang; &lang;mutator name&rang;)</code>, and
+      all <code>&lang;field names&rang;</code>, <code>&lang;accessor
+      names&rang;</code> and <code>&lang;mutator names&rang;</code>
+      are identifiers.</p>
+
+    <p>It is an error for the same identifier to occur more than once
+      as a field name.</p>
+
+    <p><i>Semantics:</i> A new non sealed, non opaque and generative
+      base record type is generated, and the form expands into a set
+      of definitions in the environment
+      where <code>define-record-type</code> appears.</p>
+
+    <p>The record type has as many fields as there
+      are <code>&lang;fields&rang;</code>, with the
+      given <code>&lang;field names&rang;</code>, in that order.
+      Each <code>&lang;field&rang;</code> if of the first form defines
+      an immutable field, and an immutable <code>&lang;field&rang;</code> otherwise.</p>
+
+    <p><code>&lang;Name&rang;</code> is defined by this definition to
+      the (bound) record name of the record type.  If this record
+      name is used in the <code>parent</code> clause of
+      another <code>define-record-type</code> definition, it is an
+      error if that <code>define-record-type</code> definition specifies no <code>protocol</code> clause.</p>
+
+    <p><code>&lang;Constructor name&rang;</code> is defined to a
+      constructor for the defined record type, taking as many
+      arguments as there are <code>&lang;field names&rang;</code>
+      listed with <code>&lang;constructor name&rang;</code>.  Fields
+      whose names are listed with <code>&lang;constructor
+      name&rang;</code> have the corresponding argument as their
+      initial value.  The initial values of all other fields are
+      unspecified.  It is an error for a field name to be listed with <code>&lang;constructor name&rang;</code>
+      but not as a field name of a field.</p>
+
+    <p><code>&lang;Predicate&rang;</code> is defined to a predicate
+    for the defined record type.</p>
+
+    <p>The <code>&lang;accessor names&rang;</code>
+      and <code>&lang;mutator names&rang;</code> are defined to the
+      accessors and mutators, respectively, of the corresponding
+      fields.</p>
+
+    <h2 id="implementation">Implementation</h2>
+
+    <p>The following is a portable implementation for R<sup>6</sup>RS systems.</p>
+
+    <pre>(library (define-record-type)
+  (export define-record-type
+          fields
+          mutable
+          immutable
+          parent
+          protocol
+          sealed
+          opaque
+          nongenerative
+          parent-rtd)
+  (import (rename (rnrs (6))
+                  (define-record-type rnrs:define-record-type)))
+  (define-syntax define-record-type
+    (lambda (stx)
+      (define who 'define-record-type)
+      (define distinct-identifiers?
+        (lambda (id*)
+          (let f ((id* id*))
+            (or (null? id*)
+                (and (not (exists
+                           (lambda (id)
+                             (bound-identifier=? (car id*) id))
+                           (cdr id*)))
+                     (f (cdr id*)))))))
+      (define gen-field-spec
+        (lambda (field)
+          (syntax-case field ()
+            [(field-name accessor-name)
+             #'(immutable field-name accessor-name)]
+            [(field-name accessor-name mutator-name)
+             #'(mutable field-name accessor-name mutator-name)]
+            [_
+             (syntax-violation who
+                               "invalid field spec"
+                               stx
+                               field)])))
+      (syntax-case stx ()
+        [(_ name (constructor-name field-name ...) pred field ...)
+         (and (identifier? #'name)
+              (identifier? #'constructor-name)
+              (for-all identifier? #'(field-name ...))
+              (identifier? #'pred)
+              (distinct-identifiers? #'(field-name ...)))
+         (let* ([name* #'(field-name ...)]
+                [tmp* (generate-temporaries name*)]
+                [field-spec* (map gen-field-spec #'(field ...))])
+           (define gen-init
+             (lambda (spec)
+               (or (exists
+                    (lambda (name tmp)
+                      (and (bound-identifier=? name (cadr spec))
+                           tmp))
+                    name* tmp*)
+                   #'#f)))
+           (for-each
+            (lambda (name)
+              (unless (exists
+                       (lambda (spec)
+                         (bound-identifier=? name (cadr spec)))
+                       field-spec*)
+                (syntax-violation who
+                                  "undefined field name"
+                                  stx
+                                  name)))
+            name*)
+           (unless (distinct-identifiers? (map cadr field-spec*))
+             (syntax-violation who
+                               "multiple field specs with the same name"
+                               stx))
+           (with-syntax ([(tmp ...) tmp*]
+                         [(init ...) (map gen-init field-spec*)]
+                         [(spec ...) field-spec*])
+             #'(define-record-type (name constructor-name pred)
+                 (fields spec ...)
+                 (protocol
+                  (lambda (p)
+                    (lambda (tmp ...)
+                      (p init ...)))))))]
+        [(_ name-spec record-clause ...)
+         #'(rnrs:define-record-type name-spec record-clause ...)]
+        [_
+         (syntax-violation who "invalid record-type definition" stx)]))))</pre>
+
+    <p>The Unsyntax Scheme implementation, which is an R<sup>7</sup>RS
+      system supporting R<sup>6</sup>RS records will contain an
+      implementation of this SRFI.</p>
+
+    <h2 id="acknowledgements">Acknowledgements</h2>
+
+    <p>The Larceny Scheme implementation pioneered the idea of
+      a <code>define-record-type</code> form that unites the syntax of
+      R<sup>6</sup>RS and R<sup>7</sup>RS.</p>
+
+    <h2 id="copyright">Copyright</h2>
+    <p>&copy; 2021 Marc Nieper-Wißkirchen.</p>
+
+    <p>
+      Permission is hereby granted, free of charge, to any person
+      obtaining a copy of this software and associated documentation files
+      (the "Software"), to deal in the Software without restriction,
+      including without limitation the rights to use, copy, modify, merge,
+      publish, distribute, sublicense, and/or sell copies of the Software,
+      and to permit persons to whom the Software is furnished to do so,
+      subject to the following conditions:</p>
+
+    <p>
+      The above copyright notice and this permission notice (including the
+      next paragraph) shall be included in all copies or substantial
+      portions of the Software.</p>
+    <p>
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+      EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+      MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+      NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+      BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+      ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+      CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+      SOFTWARE.</p>
+
+    <hr>
+    <address>Editor: <a href="mailto:srfi-editors+at+srfi+dot+schemers+dot+org">Arthur A. Gleckler</a></address></body></html>
