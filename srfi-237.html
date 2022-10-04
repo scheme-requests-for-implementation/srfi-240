@@ -38,7 +38,7 @@
 
     <p>In contrast to R<sup>6</sup>RS, the Scheme standard
       R<sup>7</sup>RS does not yet have record types that can be
-      extended via single inheritence, can be defined procedurally, or
+      extended via single inheritance, can be defined procedurally, or
       can be inspected.  Several proposals, including SRFI 99, SRFI
       131, SRFI 136, and SRFI 150, have been made to add such record
       types to R<sup>7</sup>RS.  Each of these proposals, however, is
@@ -125,7 +125,7 @@
     <p>Record type definitions and the record types defined through them can have one or more of the
       following
       attributes in R<sup>6</sup>RS: <i>non-generativity</i>, <i>sealedness</i>,
-      and <i>opacity</i>.  All of them have there respective raison d'être:</p>
+      and <i>opacity</i>.  Each has its respective raison d'être:</p>
 
     <ul>
       <li>
@@ -135,12 +135,12 @@
           type definitions to take advantage of lexical scoping
           feasible.  In fact, non-generative record type definitions
           behave as definitions of records/structures/classes in
-          statically-types languages.
+          statically typed languages.
         </p>
       </li>
       <li>
         <p>
-          If a record type is <dfn>sealed</dfn> no extensions of the
+          If a record type is <dfn>sealed</dfn>, no extensions of the
           record type can be created.  While this allows a compiler to
           generate slightly more efficient code for such a record
           type's accessors and mutators, the real use of sealedness is
@@ -236,8 +236,8 @@
       with <code>&lang;constructor name&rang;</code>.  When the
       constructor is invoked, fields of the new created record whose
       names are listed with <code>&lang;constructor name&rang;</code>
-      take their (initial) value from the corresponding actual
-      argument.  The (initial) values of all other fields of the newly
+      take their (initial) values from the corresponding actual
+      arguments.  The (initial) values of all other fields of the newly
       created record are unspecified.
 
     <p>It is an error for a field name
