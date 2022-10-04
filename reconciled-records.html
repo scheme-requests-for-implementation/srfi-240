@@ -102,7 +102,8 @@
           types have to be constructed at runtime, e.g. by
           interpreters that need to construct host-compatible record
           types.  The procedural layer much like the inspection layer
-          is therefore not needed for most code.</p>
+          is therefore not needed for most code.  Therefore, a vast
+          majority of programmers can ignore the procedural layer.</p>
       </li>
       <li>
         <p>The syntactic and the procedural layer are compatible and a
@@ -113,6 +114,51 @@
           all that has to be exposed from it is either the (bound)
           record name or the record type descriptor (with or without a
           record constructor descriptor).</p>
+      </li>
+    </ul>
+
+    <p>Record type definitions and the record types defined through them can have one or more of the
+      following
+      attributes in R<sup>6</sup>RS: <i>non-generativity</i>, <i>sealedness</i>,
+      and <i>opacity</i>.  All of them have there respective raison d'être:</p>
+
+    <ul>
+      <li>
+        <p> A record type (definition) is <dfn>non-generative</dfn> if
+          evaluating a definition creates a new record type only once
+          per expansion of the defining form.  This makes local record
+          type definitions to take advantage of lexical scoping
+          feasible.  In fact, non-generative record type definitions
+          behave as definitions of records/structures/classes in
+          statically-types languages.
+        </p>
+      </li>
+      <li>
+        <p>
+          If a record type is <dfn>sealed</dfn> no extensions of the
+          record type can be created.  While this allows a compiler to
+          generate slightly more efficient code for such a record
+          type's accessors and mutators, the real use of sealedness is
+          that it can guarantee correctness.  When the type predicate
+          of a Scheme record type returns <code>#t</code> for a record
+          type, it also returns <code>#t</code> on all child record
+          types of this type.  Thus, the argument types of procedures
+          that have to rely on the type predicate to check for type
+          correctness are automatically contravariant.  Sealedness
+          breaks contravariance and is thus a method to define
+          procedures for record types that are non-contravariant.
+        </p>
+      </li>
+      <li>
+        <p>
+          An <dfn>opaque</dfn> record type cannot be inspected through
+          the inspection layer.  Unless its record name or record
+          type-descriptor are exported, it behaves as a non-record
+          type.  Opaque record types can thus be used to implement
+          fundamental types like pairs while enforcing portability of
+          code.  Most of the disjoint types introduced by SRFIs should
+          be implemented as opaque record types.
+        </p>
       </li>
     </ul>
 
@@ -128,7 +174,7 @@
     <p>The libraries also export the auxiliary
       syntax <code>fields</code>, <code>mutable</code>, <code>immutable</code>, <code>parent</code>, <code>protocol</code>, <code>sealed</code>, <code>opaque</code>, <code>nongenerative</code>, <code>parent-rtd</code>.</p>
 
-    <p>An R<sup>7</sup>RS system may provide
+    <p>An R<sup>7</sup>RS system supporting this SRFI should provide
       the <code>define-record-type</code> syntax also by <code>(scheme
       base)</code>.</p>
 
@@ -170,7 +216,7 @@
       are <code>&lang;fields&rang;</code>, with the
       given <code>&lang;field names&rang;</code>, in that order.
       Each <code>&lang;field&rang;</code> if of the first form defines
-      an immutable field, and an immutable <code>&lang;field&rang;</code> otherwise.</p>
+      an immutable field, and a mutable <code>&lang;field&rang;</code> otherwise.</p>
 
     <p><code>&lang;Name&rang;</code> is defined by this definition to
       the (bound) record name of the record type.  If this record
@@ -178,23 +224,83 @@
       another <code>define-record-type</code> definition, it is an
       error if that <code>define-record-type</code> definition specifies no <code>protocol</code> clause.</p>
 
-    <p><code>&lang;Constructor name&rang;</code> is defined to a
-      constructor for the defined record type, taking as many
-      arguments as there are <code>&lang;field names&rang;</code>
-      listed with <code>&lang;constructor name&rang;</code>.  Fields
-      whose names are listed with <code>&lang;constructor
-      name&rang;</code> have the corresponding argument as their
-      initial value.  The initial values of all other fields are
-      unspecified.  It is an error for a field name to be listed with <code>&lang;constructor name&rang;</code>
-      but not as a field name of a field.</p>
+    <p><code>&lang;Constructor name&rang;</code> is bound by the
+      definition to a constructor for the defined record type.  The
+      constructor takes as many arguments as there
+      are <code>&lang;field names&rang;</code> listed
+      with <code>&lang;constructor name&rang;</code>.  When the
+      constructor is invoked, fields of the new created record whose
+      names are listed with <code>&lang;constructor name&rang;</code>
+      take their (initial) value from the corresponding actual
+      argument.  The (initial) values of all other fields of the newly
+      created record are unspecified.
 
-    <p><code>&lang;Predicate&rang;</code> is defined to a predicate
-    for the defined record type.</p>
+    <p>It is an error for a field name
+      to be listed with <code>&lang;constructor name&rang;</code> but
+      not as a field name of a field.</p>
+
+    <p><code>&lang;Predicate&rang;</code> is bound by the definition
+    to a predicate for the defined record type.</p>
 
     <p>The <code>&lang;accessor names&rang;</code>
-      and <code>&lang;mutator names&rang;</code> are defined to the
-      accessors and mutators, respectively, of the corresponding
-      fields.</p>
+      and <code>&lang;mutator names&rang;</code> are bound by the
+      definition to the accessors and mutators, respectively, of the
+      corresponding fields.</p>
+
+    <p>The following example program runs without an error.</p>
+
+    <pre>(import (except (rnrs (6)) define-record-type)
+	(srfi :###))
+
+(define-record-type foo
+  (make-foo x)
+  foo?
+  (x foo-x)
+  (y foo-y foo-set-y!))
+
+(assert (equal? #t (foo? (make-foo 1))))
+
+(assert (equal? 2 (foo-x (make-foo 2))))
+
+(assert (equal? '(3 4) (let ((foo (make-foo 3)))
+                         (foo-set-y! foo 4)
+                         (list (foo-x foo) (foo-y foo)))))
+
+(define rtd (record-type-descriptor foo))
+(define rcd (record-constructor-descriptor foo))
+
+(assert (equal? 'foo (record-type-name rtd)))
+
+(assert (not (record-type-parent rtd)))
+
+(assert (record-type-generative? rtd))
+
+(assert (not (record-type-sealed? rtd)))
+
+(assert (not (record-type-opaque? rtd)))
+
+(assert (equal? '#(x y) (record-type-field-names rtd)))
+
+(assert (not (record-field-mutable? rtd 0)))
+
+(assert (record-field-mutable? rtd 1))
+
+(assert rcd)
+
+(define-record-type bar
+  (parent foo)
+  (fields z)
+  (protocol
+   (lambda (n)
+     (lambda (x z)
+       ((n x) z)))))
+
+(assert (foo? (make-bar 5 6)))
+(assert (equal? 5 (foo-x (make-bar 5 6))))
+(assert (equal? 6 (bar-z (make-bar 5 6))))
+(assert (equal? 7 (let ([bar (make-bar 5 6)])
+                    (foo-set-y! bar 7)
+                    (foo-y bar))))</pre>
 
     <h2 id="implementation">Implementation</h2>
 
@@ -293,6 +399,27 @@
     <p>The Larceny Scheme implementation pioneered the idea of
       a <code>define-record-type</code> form that unites the syntax of
       R<sup>6</sup>RS and R<sup>7</sup>RS.</p>
+
+    <p>The foundations of the record facility described here come from
+    R<sup>6</sup>RS.</p>
+
+    <ol>
+      <li id="larcenists">
+        <p>
+          The Larcenists:
+          <a href="https://larcenists.github.io/Documentation/Documentation1.3/user-manual-alt.html#R6rsChapter"><cite>Records</cite></a>. Larceny
+          User Manual, R<sup>6</sup>R6 Standard Libraries.
+        </p>
+      </li>
+      <li id="sperber">
+	<p>Michael Sperber, R. Kent Dybvig, Matthew Flatt,
+	  Anton van Straaten, Robby Findler, and Jacob
+	  Matthews: <cite>Revised<sup>6</sup> Report on the Algorithmic
+	    Language Scheme</cite>. Journal of Functional Programming,
+	  Volume 19, Supplement S1, August 2009,
+	  pp. 1-301. DOI: <a href="https://doi.org/10.1017/S0956796809990074">10.1017/S0956796809990074</a>.</p>
+      </li>
+    </ol>
 
     <h2 id="copyright">Copyright</h2>
     <p>&copy; 2021 Marc Nieper-Wißkirchen.</p>

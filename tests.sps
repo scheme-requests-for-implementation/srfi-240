@@ -60,6 +60,21 @@
 
 (assert rcd)
 
+(define-record-type bar
+  (parent foo)
+  (fields z)
+  (protocol
+   (lambda (n)
+     (lambda (x z)
+       ((n x) z)))))
+
+(assert (foo? (make-bar 5 6)))
+(assert (equal? 5 (foo-x (make-bar 5 6))))
+(assert (equal? 6 (bar-z (make-bar 5 6))))
+(assert (equal? 7 (let ([bar (make-bar 5 6)])
+                    (foo-set-y! bar 7)
+                    (foo-y bar))))
+
 ;; Local Variables:
 ;; mode: scheme
 ;; End:
