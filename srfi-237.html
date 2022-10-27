@@ -175,30 +175,77 @@
 
     <h2 id="specification">Specification</h2>
 
-    <h3>Syntax</h3>
+    <p>The record mechanism spans three R<sup>6</sup>RS libraries:</p>
+    <ul>
+      <li>the <code>(srfi :237 records syntactic)</code> library, a
+        syntactic layer for defining a record type and associated
+        constructor, predicate, accessor, and mutators,</li>
+      <li>the <code>(srfi :237 records procedural)</code> library, a
+        procedural layer for creating and manipulating record types and
+        creating constructors, predicates, accessors, and mutators,</li>
+      <li>the <code>(srfi :237 records inspection)</code> library, a
+        set of inspection procedures.</li>
+    </ul>
 
-    <p>The syntax described in this section is provided by
-      the <code>(srfi 237)</code> library on R<sup>7</sup>RS systems,
-      and the <code>(srfi :237)</code> and <code>(srfi :237
-        define-record-type)</code> libraries on R<sup>6</sup>RS systems.</p>
+    <p>The corresponding R<sup>7</sup>RS library names are <code>(srfi
+        237 syntactic)</code>,
+      <code>(srfi 237 procedural)</code>, and <code>(srfi 237
+        inspection)</code>, respectively.</p>
 
-    <p>The libraries also export the auxiliary
-      syntax <code>fields</code>, <code>mutable</code>, <code>immutable</code>, <code>parent</code>, <code>protocol</code>, <code>sealed</code>, <code>opaque</code>, <code>nongenerative</code>, <code>parent-rtd</code>.</p>
+    <h3>Syntactic layer</h3>
+
+    <p>The syntactic layer is provided by the <code>(srfi :237 records
+        syntactic)</code> library.</p>
+
+    <h4>Syntax</h4>
+
+    <p>The libraries exports the auxiliary
+      syntax <code>fields</code>, <code>mutable</code>, <code>immutable</code>, <code>parent</code>, <code>protocol</code>, <code>sealed</code>, <code>opaque</code>, <code>nongenerative</code>, <code>parent-rtd</code>
+      identical to the exports by the same name of <code>(rnrs records syntactic (6))</code>.</p>
 
     <p>An R<sup>7</sup>RS system supporting this SRFI should provide
       the <code>define-record-type</code> syntax also by <code>(scheme
-      base)</code>.</p>
+        base)</code>.</p>
 
     <p><code>(define-record-type &lang;name spec&rang; &lang;record clause&rang; &hellip;)</code></p>
 
-    <p><i>Syntax:</i> This syntax is identical to the syntax of the
+    <p><i>Syntax:</i> This syntax is equivalent to the syntax of the
       record-type-defining form <code>define-record-type</code>
       exported by <code>(rnrs records syntactic (6))</code>.</p>
 
     <p><i>Semantics:</i>
       This definition is equivalent to the record-type-defining
       form <code>define-record-type</code> exported by <code>(rnrs
-        records syntactic (6))</code>.</p>
+        records syntactic (6))</code> with the followings additions:</p>
+
+    <p>The <code>record name</code> is bound to a <dfn>record
+      name<dfn>, which is a keyword.  As an expression, this keyword
+      evaluates to the underlying record descriptor.</p>
+
+    <p><i>Note:</i> R<sup>6</sup>RS allows that the <code>record
+        name</code> is bound to an expand-time or run-time representation.</p>
+
+    <p>In a <code>parent</code> clause, the <code>parent name</code>
+      can be either a record name or an expression that
+      must evaluate to a record-type descriptor or record descriptor.
+      If <code>parent name</code> is a record name,
+      the <code>parent</code> clause is equivalent to
+      a <code>parent</code> clause of the R<sup>6</sup>RS syntactic
+      layer.</p>
+
+    <p>Otherwise, if the expression evaluates to a record-type
+      descriptor <code><var>rtd</var></code>, the <code>parent</code>
+      clause is equivalent to the
+      clause <code>(parent-rtd <var>rtd</var> #f)</code> of the
+      R<sup>6</sup>RS syntactic layer.</p>
+
+    <p>Finally, if the expression evaluates to a record
+      descriptor <code><var>rd</var></code>, the <code>parent</code>
+      clause is equivalent to the
+      clause <code>(parent-rtd <var>rd</var> <var>rd</var>)</code> of the
+      R<sup>6</sup>RS syntactic layer.</p>
+
+    <p>The <code>parent-rtd</code> clause is deprecated.</p>
 
     <p><code>(define-record-type &lang;name&rang;
         (&lang;constructor name&rang; &lang;field name&rang; &hellip;)
@@ -258,10 +305,155 @@
       definition to the accessors and mutators, respectively, of the
       corresponding fields.</p>
 
+    <p><code>(record-type-descriptor &lang;record name&rang;)</code></p>
+
+    <p>Equivalent to the syntax with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p>The <code>record-type-descriptor</code> syntax is deprecated.</p>
+
+    <p><i>Note:</i> Use <code>(record-descriptor-rtd &lang;record name&rang;)</code> instead.</p>
+
+    <p><code>(record-constructor-descriptor &lang;record name&rang;)</code></p>
+
+    <p>Equivalent to the syntax with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p>The <code>record-constructor-descriptor</code> syntax is deprecated.</p>
+
+    <p><i>Note:</i> Use <code>(values &lang;record name&rang;)</code> instead.</p>
+
+    <h3>Procedural layer</h3>
+
+    <p>The syntactic layer is provided by the <code>(srfi :237 records
+        procedural)</code> library.</p>
+
+    <h4>Procedures</h4>
+
+    <p><code>(make-record-type-descriptor <var>obj</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-type-descriptor? <var>obj</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(make-record-descriptor <var>obj</var>)</code></p>
+    <p><code>(make-record-constructor-descriptor <var>obj</var>)</code></p>
+
+    <p>Equivalent to the procedure with the latter name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>The name <code>make-record-constructor-descriptor</code> is
+        deprecated.</p>
+
+    <p><code>(record-descriptor-rtd <var>rd</var>)</code></p>
+
+    <p>Returns the record-type descriptor representing the type of
+      records associated with <code><var>rd</var></code>.</p>
+
+    <p><code>(record-descriptor? <var>obj</var>)</code></p>
+    <p><code>(record-constructor-descriptor? <var>obj</var>)</code></p>
+
+    <p>Returns <code>#t</code> if the argument is a record
+      descriptor, <code>#f</code> otherwise.</p>
+
+    <p><i>Note:</i> This predicate is missing in R<sup>6</sup>RS.
+      According to at least one of the editors, it shouldn't.</p>
+
+    <p><code>The name <code>record-constructor-descriptor?</code> is
+        deprecated.</p>
+
+    <p><code>(record-constructor <var>obj</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-predicate <var>rtd</var> <var>k</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-accessor <var>rtd</var> <var>k</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-mutator <var>rtd</var> <var>k</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <h3>Inspection layer</h3>
+
+    <p>The syntactic layer is provided by the <code>(srfi :237 records
+        inspection)</code> library.</p>
+
+    <h4>Procedures</h4>
+
+    <p><code>(record? <var>obj</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-rtd <var>record</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-type-name <var>rtd</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-type-parent <var>rtd</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-type-parent <var>rtd</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-type-uid <var>rtd</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-type-generative? <var>rtd</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-type-sealed? <var>rtd</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-type-opaque? <var>rtd</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-type-field-names <var>rtd</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <p><code>(record-type-mutable? <var>rtd</var> <var>k</var>)</code></p>
+
+    <p>Equivalent to the procedure with the same name in
+      R<sup>6</sup>RS.</p>
+
+    <h3>Example</h2>
+
     <p>The following example program runs without an error.</p>
 
-    <pre>(import (except (rnrs (6)) define-record-type)
-	(srfi :237))
+    <pre>(import (except (rnrs (6)) define-record-type record-type-descriptor record-constructor-descriptor)
+	(srfi :237 records syntactic))
 
 (define-record-type foo
   (make-foo x)
@@ -412,7 +604,7 @@
       R<sup>6</sup>RS and R<sup>7</sup>RS.</p>
 
     <p>The foundations of the record facility described here come from
-    R<sup>6</sup>RS.</p>
+      R<sup>6</sup>RS.  This SRFI reuses language from R<sup>6</sup>RS.</p>
 
     <ol>
       <li id="larcenists">
