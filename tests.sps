@@ -75,6 +75,29 @@
                     (foo-set-y! bar 7)
                     (foo-y bar))))
 
+(define-record-type rec1
+  (fields a)
+  (protocol
+   (lambda (p)
+     (lambda (a/2)
+       (p (* 2 a/2))))))
+
+(define rec2
+  (make-record-descriptor
+   (make-record-type-descriptor 'rec2 rec1 #f #f #f '#((immutable b)))
+   rec1
+   (lambda (n)
+     (lambda (a/2 b)
+       ((n a/2) b)))))
+
+(define-record-type rec3
+  (parent rec2)
+  (fields c)
+  (protocol
+   (lambda (n)
+     (lambda (c)
+       ((n c c) c)))))
+
 ;; Local Variables:
 ;; mode: scheme
 ;; End:
