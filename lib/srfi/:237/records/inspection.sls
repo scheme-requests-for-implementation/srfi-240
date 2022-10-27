@@ -22,58 +22,18 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(import (rnrs base (6))
-	(srfi :237))
-
-(define-record-type foo
-  (make-foo x)
-  foo?
-  (x foo-x)
-  (y foo-y foo-set-y!))
-
-(assert (equal? #t (foo? (make-foo 1))))
-
-(assert (equal? 2 (foo-x (make-foo 2))))
-
-(assert (equal? '(3 4) (let ((foo (make-foo 3)))
-                         (foo-set-y! foo 4)
-                         (list (foo-x foo) (foo-y foo)))))
-
-(define rtd (record-type-descriptor foo))
-(define rcd (record-constructor-descriptor foo))
-
-(assert (equal? 'foo (record-type-name rtd)))
-
-(assert (not (record-type-parent rtd)))
-
-(assert (record-type-generative? rtd))
-
-(assert (not (record-type-sealed? rtd)))
-
-(assert (not (record-type-opaque? rtd)))
-
-(assert (equal? '#(x y) (record-type-field-names rtd)))
-
-(assert (not (record-field-mutable? rtd 0)))
-
-(assert (record-field-mutable? rtd 1))
-
-(assert rcd)
-
-(define-record-type bar
-  (parent foo)
-  (fields z)
-  (protocol
-   (lambda (n)
-     (lambda (x z)
-       ((n x) z)))))
-
-(assert (foo? (make-bar 5 6)))
-(assert (equal? 5 (foo-x (make-bar 5 6))))
-(assert (equal? 6 (bar-z (make-bar 5 6))))
-(assert (equal? 7 (let ([bar (make-bar 5 6)])
-                    (foo-set-y! bar 7)
-                    (foo-y bar))))
+(library (srfi :237 records inspection)
+  (export record?
+	  record-rtd
+	  record-type-name
+	  record-type-parent
+	  record-type-uid
+	  record-type-generative?
+	  record-type-sealed?
+	  record-type-opaque?
+	  record-type-field-names
+	  record-field-mutable?)
+  (import (srfi :237 records)))
 
 ;; Local Variables:
 ;; mode: scheme
