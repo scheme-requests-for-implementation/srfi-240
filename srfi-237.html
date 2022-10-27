@@ -199,6 +199,48 @@
       </li>
     </ul>
 
+    <h3>Examples</h3>
+
+    <p>Both of the following record type definitions are allowed with the syntax provided by this SRFI and are equivalent:</p>
+
+    <pre>(define-record-type foo
+  (make-foo x)
+  foo?
+  (x foo-x)
+  (y foo-y foo-set-y!))</pre>
+
+    <pre>(define-record-type (foo make-foo foo?)
+  (fields (immutable x foo-x)
+          (mutable y foo-y foo-set-y!)))</pre>
+
+    <p>Record types defined by the syntactic and by the procedural layer are fully compatible and can simply inherit from each other:</p>
+
+   <pre>(define-record-type rec1
+  (fields a)
+  (protocol
+   (lambda (p)
+     (lambda (a/2)
+       (p (* 2 a/2))))))
+
+(define rec2
+  (make-record-descriptor 'rec2
+    rec1 #f #f #f
+    '#((immutable b))
+    (lambda (n)
+      (lambda (a/2 b)
+        ((n a/2) b)))))
+(define make-rec2 (record-constructor rec2))
+(define rec2? (record-predicate rec2))
+(define rec2-b (record-accessor rec2 0))
+
+(define-record-type rec3
+  (parent rec2)
+  (fields c)
+  (protocol
+   (lambda (n)
+     (lambda (c)
+       ((n c c) c)))))</pre>
+
     <h2 id="specification">Specification</h2>
 
     <p>The record mechanism spans three R<sup>6</sup>RS libraries:</p>
@@ -521,7 +563,7 @@
     <p>Equivalent to the procedure with the same name in
       R<sup>6</sup>RS.</p>
 
-    <h3>Example</h2>
+    <h3>Example</h3>
 
     <p>The following example program runs without an error.</p>
 
