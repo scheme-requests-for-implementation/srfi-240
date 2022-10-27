@@ -31,9 +31,15 @@
       the <code>define-record-type</code> syntax
       of <code>R<sup>7</sup>RS</code>, reconciling both systems.</p>
 
-    <p>This is a proposal for a future SRFI to be adopted by
-      R<sup>7</sup>RS-large to integrate the R<sup>6</sup>RS record
-      system compatibly with the existing R<sup>7</sup>RS-small record
+    <p>Moreover, the record mechanism of R<sup>6</sup>RS is refined so
+      that the triad of record names, record-type descriptors and
+      record constructor descriptors can be effectively ignored and
+      replaced with the single notion of a record
+      descriptor.</p>
+
+    <p>This SRFI is meant to be adopted by R<sup>7</sup>RS-large to
+      integrate essentially the R<sup>6</sup>RS record system
+      compatibly with the existing R<sup>7</sup>RS-small record
       system.</p>
 
     <h2 id="issues">Issues</h2>
@@ -107,6 +113,19 @@
         <p>While the complexity of the record system would have
           exceeded the scope and size of R<sup>7</sup>RS-small, it
           fits the scope and size of R<sup>7</sup>RS-large.</p>
+	<p>Nevertheless, the conceptual distinction between record
+	  names, record-type descriptors, and record constructor
+	  descriptors made in R<sup>6</sup>RS has been perceived as
+	  challenging by users.  This SRFI therefore refines the
+	  R<sup>6</sup>RS record mechanism so that the triad of record
+	  names, record-type descriptors and record constructor
+	  descriptors can be effectively ignored and replaced with the
+	  single notion of a <i>record descriptor</i>.  In particular,
+	  the <code>parent-rtd</code> clause and
+	  the <code>record-type-descriptor</code> and
+	  the <code>record-constructor-descriptor</code> syntax are no
+	  longer needed.
+	</p>
       </li>
       <li>
         <p>The procedural layer is intended to be used when record
@@ -125,6 +144,9 @@
           all that has to be exposed from it is either the (bound)
           record name or the record type descriptor (with or without a
           record constructor descriptor).</p>
+
+	<p>The latter is simplified by this SRFI as the latter three
+	  entities can be used effectively interchangeably.</p>
       </li>
     </ul>
 
@@ -187,10 +209,50 @@
         set of inspection procedures.</li>
     </ul>
 
+    <p>The <code>(srfi :237)</code> and <code>(srfi :237
+      records)</code> libraries are each a composite of these three
+      libraries.  This composite library exports all procedures and
+      syntactic forms provided by the component libraries.</p>
+
     <p>The corresponding R<sup>7</sup>RS library names are <code>(srfi
         237 syntactic)</code>,
-      <code>(srfi 237 procedural)</code>, and <code>(srfi 237
-        inspection)</code>, respectively.</p>
+      <code>(srfi 237 procedural)</code>, <code>(srfi 237
+        inspection)</code>, and <code>(srfi 237)</code>, respectively.</p>
+
+    <p>The record mechanism described in this SRFI is based on the
+      record mechanism described in R<sup>6</sup>RS.  Unless said
+      otherwise, definitions and semantics remain unchanged from
+      R<sup>6</sup>RS.</p>
+
+    <p>A <dfn>record descriptor</dfn> is what is called a <i>record
+	constructor descriptor</i> in R<sup>6</sup>RS.  The term <i>record
+	constructor descriptor</i> is deprecated.</p>
+
+    <p>The naming convention <code><var>rd</var></code> in the
+      procedure entries below imply that the type of the argument must
+      be a record descriptor.</p>
+
+    <p>The type of record descriptors is a subtype of the type of
+      record-type descriptors.  A record-type descriptor that is not a
+      record descriptor is a <dfn>simple record-type descriptor</dfn>.
+      Each record descriptor has an <dfn>underlying simple record-type
+      descriptor</dfn>.  The underlying simple record-type descriptor
+      of a simple record-type descriptor is the simple record-type
+      descriptor itself.</p>
+
+    <p>Whenever a syntax or procedure described below expects a
+      record-type descriptor, the result is equivalent to when the
+      record-type descriptor is replaced by its underlying simple
+      record-type descriptor.</p>
+
+    <p><i>Note:</i> Conceptually, a record descriptor is a simple
+      record-type descriptor together with an R<sup>6</sup>RS record
+      constructor descriptor whose associated record type is
+      represented by the simple record-type descriptor.</p>
+
+    <p><i>Note:</i> Most users can safely ignore the notion of an
+      underlying simple record-type descriptor and just use record
+      descriptors.</p>
 
     <h3>Syntactic layer</h3>
 
@@ -199,19 +261,14 @@
 
     <h4>Syntax</h4>
 
-    <p>The libraries exports the auxiliary
+    <p>The library exports the auxiliary
       syntax <code>fields</code>, <code>mutable</code>, <code>immutable</code>, <code>parent</code>, <code>protocol</code>, <code>sealed</code>, <code>opaque</code>, <code>nongenerative</code>, <code>parent-rtd</code>
       identical to the exports by the same name of <code>(rnrs records syntactic (6))</code>.</p>
 
     <p>An R<sup>7</sup>RS system supporting this SRFI should provide
-<<<<<<< HEAD
-      the <code>define-record-type</code> syntax also by <code>(scheme
-        base)</code>.</p>
-=======
       the <code>define-record-type</code> syntax also in
       the <code>(scheme base)</code> library.  In this case, the
       feature identifier <code>srfi-237</code> should be provided.</p>
->>>>>>> 39f9f26 (Specify feature identifier.)
 
     <p><code>(define-record-type &lang;name spec&rang; &lang;record clause&rang; &hellip;)</code></p>
 
@@ -224,18 +281,21 @@
       form <code>define-record-type</code> exported by <code>(rnrs
         records syntactic (6))</code> with the followings additions:</p>
 
-    <p>The <code>record name</code> is bound to a <dfn>record
-      name<dfn>, which is a keyword.  As an expression, this keyword
-      evaluates to the underlying record descriptor.</p>
+    <p>The <code>&lang;record name&rang;</code> is bound to a <dfn>record
+	name</dfn>, which is a keyword.  As an expression, this keyword
+      evaluates to the underlying record descriptor whose underlying
+      simple record-type descriptor is the simple record-type
+      descriptor associated with the type specified by <code>&lang;record
+	name&rang;</code>.</p>
 
-    <p><i>Note:</i> R<sup>6</sup>RS allows that the <code>record
-        name</code> is bound to an expand-time or run-time representation.</p>
+    <p><i>Note:</i> R<sup>6</sup>RS allows that <code>&lang;record
+        name&rang;</code> is bound to an expand-time or run-time representation.</p>
 
-    <p>In a <code>parent</code> clause, the <code>parent name</code>
-      can be either a record name or an expression that
-      must evaluate to a record-type descriptor or record descriptor.
-      If <code>parent name</code> is a record name,
-      the <code>parent</code> clause is equivalent to
+    <p>In a <code>parent</code> clause, the <code>&lang;parent
+      name&rang;</code> can be either a record name or an expression
+      that must evaluate to a record-type descriptor or record
+      descriptor.  If <code>&lang;parent name&rang;</code> is a record
+      name, the <code>parent</code> clause is equivalent to
       a <code>parent</code> clause of the R<sup>6</sup>RS syntactic
       layer.</p>
 
@@ -273,8 +333,8 @@
 
     <p><i>Semantics:</i> A new non sealed, non opaque and generative
       base record type is generated, and the form expands into a set
-      of definitions in the environment
-      where <code>define-record-type</code> appears.</p>
+      of definitions in the environment where
+      the <code>define-record-type</code> form appears.</p>
 
     <p>The record type has as many fields as there
       are <code>&lang;fields&rang;</code>, with the
@@ -336,29 +396,31 @@
 
     <h4>Procedures</h4>
 
-    <p><code>(make-record-type-descriptor <var>obj</var>)</code></p>
+    <p><code>(make-record-type-descriptor <var>name</var> <var>parent</var> <var>uid</var> <var>sealed?</var> <var>opaque?</var> <var>fields</var>)</code></p>
 
     <p>Equivalent to the procedure with the same name in
-      R<sup>6</sup>RS.</p>
+      R<sup>6</sup>RS.  The returned record-type descriptor is a
+      simple record-type descriptor.</p>
 
     <p><code>(record-type-descriptor? <var>obj</var>)</code></p>
 
     <p>Equivalent to the procedure with the same name in
       R<sup>6</sup>RS.</p>
 
-    <p><code>(make-record-descriptor <var>obj</var>)</code></p>
-    <p><code>(make-record-constructor-descriptor <var>obj</var>)</code></p>
+    <p><code>(make-record-descriptor <var>rtd</var> <var>parent-descriptor</var> <var>protocol</var>)</code></p>
+    <p><code>(make-record-constructor-descriptor <var>rtd</var> <var>parent-descriptor</var> <var>protocol</var>)</code></p>
 
     <p>Equivalent to the procedure with the latter name in
-      R<sup>6</sup>RS.</p>
+      R<sup>6</sup>RS.  The underlying simple record-type descriptor
+      of the returned record descriptor is the underlying simple
+      record-type descriptor of <code><var>rtd</var></code>.</p>
 
-    <p><code>The name <code>make-record-constructor-descriptor</code> is
+    <p>The name <code>make-record-constructor-descriptor</code> is
         deprecated.</p>
 
     <p><code>(record-descriptor-rtd <var>rd</var>)</code></p>
 
-    <p>Returns the record-type descriptor representing the type of
-      records associated with <code><var>rd</var></code>.</p>
+    <p>Returns the underlying simple record-type descriptor of <code>rd</code>.</p>
 
     <p><code>(record-descriptor? <var>obj</var>)</code></p>
     <p><code>(record-constructor-descriptor? <var>obj</var>)</code></p>
@@ -369,10 +431,10 @@
     <p><i>Note:</i> This predicate is missing in R<sup>6</sup>RS.
       According to at least one of the editors, it shouldn't.</p>
 
-    <p><code>The name <code>record-constructor-descriptor?</code> is
+    <p>The name <code>record-constructor-descriptor?</code> is
         deprecated.</p>
 
-    <p><code>(record-constructor <var>obj</var>)</code></p>
+    <p><code>(record-constructor <var>rd</var>)</code></p>
 
     <p>Equivalent to the procedure with the same name in
       R<sup>6</sup>RS.</p>
@@ -419,11 +481,6 @@
     <p>Equivalent to the procedure with the same name in
       R<sup>6</sup>RS.</p>
 
-    <p><code>(record-type-parent <var>rtd</var>)</code></p>
-
-    <p>Equivalent to the procedure with the same name in
-      R<sup>6</sup>RS.</p>
-
     <p><code>(record-type-uid <var>rtd</var>)</code></p>
 
     <p>Equivalent to the procedure with the same name in
@@ -449,7 +506,7 @@
     <p>Equivalent to the procedure with the same name in
       R<sup>6</sup>RS.</p>
 
-    <p><code>(record-type-mutable? <var>rtd</var> <var>k</var>)</code></p>
+    <p><code>(record-field-mutable? <var>rtd</var> <var>k</var>)</code></p>
 
     <p>Equivalent to the procedure with the same name in
       R<sup>6</sup>RS.</p>
@@ -514,7 +571,7 @@
     <h2 id="implementation">Implementation</h2>
 
     <p>A <a href="https://github.com/scheme-requests-for-implementation/srfi-237/tree/main/lib">portable
-    implementation</a> for R<sup>6</sup>RS systems is
+    implementation</a> for R<sup>6</sup>RS systems with an implementation of SRFI 213 is
     in <a href="https://github.com/scheme-requests-for-implementation/srfi-237">this
     SRFI's repository</a>.</p>
 

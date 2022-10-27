@@ -1,4 +1,4 @@
-SCHEME = chezscheme --libdirs lib --program
+SCHEME = chezscheme --libdirs lib/:srfi-213/lib/ --program
 
 check:
 	$(SCHEME) tests.sps
