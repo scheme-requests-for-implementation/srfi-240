@@ -84,11 +84,13 @@
 
 (define rec2
   (make-record-descriptor
-   (make-record-type-descriptor 'rec2 rec1 #f #f #f '#((immutable b)))
-   rec1
+   'rec2 rec1 #f #f #f '#((immutable b))
    (lambda (n)
      (lambda (a/2 b)
        ((n a/2) b)))))
+(define make-rec2 (record-constructor rec2))
+(define rec2? (record-predicate rec2))
+(define rec2-b (record-accessor rec2 0))
 
 (define-record-type rec3
   (parent rec2)

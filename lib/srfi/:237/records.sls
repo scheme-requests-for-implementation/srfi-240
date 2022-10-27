@@ -109,9 +109,13 @@
       (rnrs:make-record-type-descriptor name (rnrs:rtd parent) uid sealed? opaque? fields)))
 
   (define make-record-descriptor
-    (lambda (rtd parent-descriptor protocol)
-      (make-rd (rnrs:rtd rtd)
-	       (rnrs:make-record-constructor-descriptor (rnrs:rtd rtd) (rnrs:cd parent-descriptor) protocol))))
+    (case-lambda
+      [(rtd parent-descriptor protocol)
+       (make-rd (rnrs:rtd rtd)
+		(rnrs:make-record-constructor-descriptor (rnrs:rtd rtd) (rnrs:cd parent-descriptor) protocol))]
+      [(name parent uid sealed? opaque? fields protocol)
+       (make-record-descriptor (make-record-type-descriptor name parent uid sealed? opaque? fields)
+			       parent protocol)]))
 
   (define make-record-constructor-descriptor
     (lambda (rtd parent-descriptor protocol)
