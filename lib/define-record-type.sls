@@ -106,3 +106,7 @@
          #'(rnrs:define-record-type name-spec record-clause ...)]
         [_
          (syntax-violation who "invalid record-type definition" stx)]))))
+
+;; Local Variables:
+;; mode: scheme
+;; End:
