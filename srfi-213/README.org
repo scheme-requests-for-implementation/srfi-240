@@ -1,0 +1,2 @@
+This otherwise-empty directory is here to facilitate including the
+SRFI 231 dependency as a Git submodule.
