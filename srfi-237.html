@@ -219,7 +219,11 @@
 
     <pre>(define-record-type (foo make-foo foo?)
   (fields (immutable x foo-x)
-          (mutable y foo-y foo-set-y!)))</pre>
+          (mutable y foo-y foo-set-y!))
+  (protocol
+    (lambda (p)
+      (lambda (x)
+        (p x (if #f #f))))))</pre>
 
     <p>Record types defined by the syntactic and by the procedural layer are fully compatible and can simply inherit from each other:</p>
 
