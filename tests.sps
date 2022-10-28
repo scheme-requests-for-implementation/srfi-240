@@ -75,6 +75,8 @@
                     (foo-set-y! bar 7)
                     (foo-y bar))))
 
+;;; Inheritance
+
 (define-record-type rec1
   (fields a)
   (protocol
@@ -99,6 +101,44 @@
    (lambda (n)
      (lambda (c)
        ((n c c) c)))))
+
+;;; Multiple constructors
+
+(define-record-type fish
+  (fields name))
+
+(define-record-type (fish salmon)
+  (protocol
+   (lambda (p)
+     (lambda ()
+       (p 'salmon)))))
+
+(assert (equal? 'salmon (fish-name (make-salmon))))
+
+(define-record-type colored-salmon
+  (parent salmon)
+  (fields color)
+  (protocol
+   (lambda (n)
+     (lambda (c)
+       ((n) c)))))
+
+(define-record-type (colored-salmon green-salmon)
+  (protocol
+   (lambda (n)
+     (lambda ()
+       ((n) 'green)))))
+
+(assert (equal? 'green (colored-salmon-color (make-green-salmon))))
+
+(define-record-type (colored-salmon blue-salmon)
+  (parent fish)
+  (protocol
+   (lambda (n)
+     (lambda ()
+       ((n 'salmon) 'blue)))))
+
+(assert (equal? 'blue (colored-salmon-color (make-blue-salmon))))
 
 ;; Local Variables:
 ;; mode: scheme
