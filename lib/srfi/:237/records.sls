@@ -237,21 +237,21 @@
                          (syntax-violation "duplicate protocol clause" stx clause))]
                     [_ (syntax-violation who "invalid record clause" stx clause)]))))))
       (syntax-case stx ()
-	[(k (template record-name) record-clause ...)
+	[(k (record-name record-type) record-clause ...)
 	 (and (identifier? #'record-name)
-	      (identifier? #'template))
+	      (identifier? #'record-type))
 	 (with-syntax ([constructor-name
 			(datum->syntax #'k (string->symbol (string-append "make-" (symbol->string (syntax->datum #'record-name)))))])
-	   #'(define-record-name ((template record-name) constructor-name) record-clause ...))]
-        [(_ ((template record-name) constructor-name) record-clause ...)
+	   #'(define-record-name (record-name record-type constructor-name) record-clause ...))]
+        [(_ (record-name record-type constructor-name) record-clause ...)
          (and (identifier? #'record-name)
-	      (identifier? #'template)
+	      (identifier? #'record-type)
               (identifier? #'constructor-name))
          (with-syntax ([(parent protocol)
-                        (parse-constructor-clauses #'template #'(record-clause ...))])
+                        (parse-constructor-clauses #'record-type #'(record-clause ...))])
            #'(begin
 	       (define record-name
-                 (make-record-descriptor template parent protocol))
+                 (make-record-descriptor record-type parent protocol))
 	       (define constructor-name (record-constructor record-name))))]
         [_
          (syntax-violation who "invalid record name definition" stx)])))
