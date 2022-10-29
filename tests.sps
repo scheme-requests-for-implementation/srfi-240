@@ -107,7 +107,7 @@
 (define-record-type fish
   (fields name))
 
-(define-record-type (fish salmon)
+(define-record-name (fish salmon)
   (protocol
    (lambda (p)
      (lambda ()
@@ -123,7 +123,7 @@
      (lambda (c)
        ((n) c)))))
 
-(define-record-type (colored-salmon green-salmon)
+(define-record-name (colored-salmon green-salmon)
   (protocol
    (lambda (n)
      (lambda ()
@@ -131,7 +131,7 @@
 
 (assert (equal? 'green (colored-salmon-color (make-green-salmon))))
 
-(define-record-type (colored-salmon blue-salmon)
+(define-record-name (colored-salmon blue-salmon)
   (parent fish)
   (protocol
    (lambda (n)

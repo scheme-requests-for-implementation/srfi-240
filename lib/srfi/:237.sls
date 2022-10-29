@@ -24,6 +24,7 @@
 
 (library (srfi :237)
   (export define-record-type
+          define-record-name
 	  fields
 	  mutable
 	  immutable
@@ -40,6 +41,7 @@
 	  make-record-descriptor
 	  make-record-constructor-descriptor
 	  record-descriptor-rtd
+          record-descriptor-parent
 	  record-descriptor?
 	  record-constructor-descriptor?
 	  record-constructor

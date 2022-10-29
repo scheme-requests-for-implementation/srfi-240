@@ -24,6 +24,7 @@
 
 (library (srfi :237 records syntactic)
   (export define-record-type
+          define-record-name
 	  fields
 	  mutable
 	  immutable
