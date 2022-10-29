@@ -250,8 +250,9 @@
          (with-syntax ([(parent protocol)
                         (parse-constructor-clauses #'record-type #'(record-clause ...))])
            #'(begin
-	       (define record-name
+	       (define rd
                  (make-record-descriptor record-type parent protocol))
+               (define-rn record-name rd)
 	       (define constructor-name (record-constructor record-name))))]
         [_
          (syntax-violation who "invalid record name definition" stx)])))
@@ -401,6 +402,18 @@
 
   (define rnrs:record-name)
 
+  (define-syntax define-rn
+    (syntax-rules ()
+      [(define-rn name rd)
+       (define-syntax name
+	 (lambda (stx)
+	   (syntax-case stx ()
+	     [k
+	      (identifier? #'k)
+	      #'rd]
+	     [_
+	      (syntax-violation 'record-name "invalid use of record name" stx)])))]))
+
   (define-syntax define-record-type-aux
     (syntax-rules ()
       [(_ record-name () parent-rd (tmp-name constructor-name predicate-name) record-clause ...)
@@ -412,14 +425,7 @@
 	 (define rtd (rnrs:record-type-descriptor tmp-name))
 	 (define cd (rnrs:record-constructor-descriptor tmp-name))
 	 (define rd (make-rd rtd cd parent-rd))
-	 (define-syntax record-name
-	   (lambda (stx)
-	     (syntax-case stx ()
-	       [k
-		(identifier? #'k)
-		#'rd]
-	       [_
-		(syntax-violation 'record-name "invalid use of record name" stx)])))
+         (define-rn record-name rd)
 	 (define-property record-name rnrs:record-name #'tmp-name))]))
 
   (define-syntax record-type-descriptor
