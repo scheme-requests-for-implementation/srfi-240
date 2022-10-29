@@ -23,9 +23,9 @@
       <li>60-day deadline: 2022-12-03</li>
       <li>Draft #1 published: 2022-10-04</li>
       <li>Draft #2 published: 2022-10-27</li>
-      <li>Marc's <a href="https://github.com/pre-srfi/reconciled-records">personal
+      <li>Marc's <a href="https://github.com/mnieper/srfi-237/blob/main/srfi-237.html">personal
 	Git repo for this SRFI</a> for reference while the SRFI is in
-	<em>draft</em> status (<a href="https://htmlpreview.github.io/?https://github.com/pre-srfi/reconciled-records/blob/main/reconciled-records.html">preview</a>)</li>
+	<em>draft</em> status (<a href="https://htmlpreview.github.io/?https://github.com/mnieper/srfi-237/blob/main/srfi-237.html">preview</a>)</li>
     </ul>
 
     <h2 id="abstract">Abstract</h2>
@@ -39,8 +39,9 @@
     <p>Moreover, the record mechanism of R<sup>6</sup>RS is refined so
       that the triad of record names, record-type descriptors and
       record constructor descriptors can be effectively ignored and
-      replaced with the single notion of a record
-      descriptor.</p>
+      replaced with the single notion of a record descriptor.  It also
+      removes the restriction that the syntactic layer can only define
+      one constructor per record type defined.</p>
 
     <p>This SRFI is meant to be adopted by R<sup>7</sup>RS-large to
       integrate essentially the R<sup>6</sup>RS record system
@@ -146,6 +147,9 @@
           types.  The procedural layer much like the inspection layer
           is therefore not needed for most code.  Therefore, a vast
           majority of programmers can ignore the procedural layer.</p>
+	<p>This is strengthened by this SRFI, which
+	  removes the restriction that the syntactic layer can only define
+	  one constructor per record type defined.</p>
       </li>
       <li>
         <p>The syntactic and the procedural layer are compatible and a
@@ -253,6 +257,77 @@
      (lambda (c)
        ((n c c) c)))))</pre>
 
+   <p>The following library defines a simplified abstract (read-only)
+     dictionary type, which can appear as a dictionary based on a hash
+     table or on an alist.  For this, it defines one record type but
+     with several names:</p>
+
+   <pre>(library (example dictionary)
+  (export dictionary dictionary? dictionary-ref
+          dictionary-from-hashtable make-dictionary-from-hashtable
+          dictionary-from-alist make-dictionary-from-alist)
+  (import (rnrs base (6))
+          (rnrs hashtables (6))
+          (srfi :237))
+
+  (define-record-type dictionary
+    (nongenerative) (opaque #t)
+    (fields ht)
+    (protocol
+     (lambda (p)
+       (lambda args
+         (assert #f)))))
+
+  (define dictionary-ref
+    (lambda (dict key default)
+      (assert (dictionary? key))
+      (hashtable-ref (dictionary-ht dict) key default)))
+
+  (define-record-name (dictionary-from-hashtable dictionary)
+    (protocol
+     (lambda (p)
+       (lambda (ht)
+         (assert (hashtable? ht))
+         (p ht)))))
+
+  (define-record-name (dictionary-from-alist dictionary)
+    (protocol
+     (lambda (p)
+       (lambda (alist)
+         (define ht (make-eqv-hashtable))
+         (assert (list? alist))
+         (for-each
+          (lambda (entry)
+            (assert (pair? entry))
+            (hashtable-set! ht (car entry) (cdr entry)))
+          alist)
+         (p ht))))))</pre>
+
+   <p>This library can be used to define child record types based on
+     either appearance:</p>
+
+   <pre>(define-record-type owned-dictionary
+  (parent dictionary)
+  (fields owner)
+  (protocol
+   (lambda (n)
+     (lambda args
+       (assert #f)))))
+
+(define-record-name (owned-dictionary-from-hashtable owned-dictionary)
+  (parent dictionary-from-hashtable)
+  (protocol
+   (lambda (n)
+     (lambda (ht owner)
+       ((n ht) owner)))))
+
+(define-record-name (owned-dictionary-from-alist owned-dictionary)
+  (parent dictionary-from-alist)
+  (protocol
+   (lambda (n)
+     (lambda (alist owner)
+       ((n alist) owner)))))</pre>
+
     <h2 id="specification">Specification</h2>
 
     <p>The record mechanism spans three R<sup>6</sup>RS libraries:</p>
@@ -294,9 +369,11 @@
       record-type descriptors.  A record-type descriptor that is not a
       record descriptor is a <dfn>simple record-type descriptor</dfn>.
       Each record descriptor has an <dfn>underlying simple record-type
-      descriptor</dfn>.  The underlying simple record-type descriptor
-      of a simple record-type descriptor is the simple record-type
-      descriptor itself.</p>
+      descriptor</dfn> and an <dfn>underlying parent descriptor</dfn>.
+      The underlying simple record-type descriptor of a simple
+      record-type descriptor is the simple record-type descriptor
+      itself.  The underlying parent descriptor of a record descriptor
+      representing a base record type is <code>#f</code>.</p>
 
     <p>Whenever a syntax or procedure described below expects a
       record-type descriptor, the result is equivalent to when the
@@ -344,7 +421,8 @@
       evaluates to the underlying record descriptor whose underlying
       simple record-type descriptor is the simple record-type
       descriptor associated with the type specified by <code>&lang;record
-	name&rang;</code>.</p>
+	name&rang;</code> and whose underlying parent descriptor is the record descriptor of the
+      parent of the type, or <code>#f</code> in case of a base type.</p>
 
     <p><i>Note:</i> R<sup>6</sup>RS allows that <code>&lang;record
         name&rang;</code> is bound to an expand-time or run-time representation.</p>
@@ -429,6 +507,47 @@
       definition to the accessors and mutators, respectively, of the
       corresponding fields.</p>
 
+    <p><code>(define-record-name &lang;name spec&rang; &lang;record clause&rang; &hellip;)</code></p>
+
+    <p><i>Syntax:</i> The <code>&lang;name spec&rang;</code> is of the
+      form <code>(&lang;record name&rang; &lang;record type&rang;
+        &lang;constructor name&rang;)</code> or <code>(&lang;record
+        name&rang; &lang;record type&rang;)</code>.
+      The <code>&lang;record name&rang;</code> must be an identifier,
+      the <code>&lang;record type&rang;</code> a record name or an
+      expression.</p>
+
+    <p>The second form of <code>&lang;name spec&rang;</code> is an
+      abbreviation for the first form, where the name of the
+      constructor is generated by prefixing the record name
+      with <code>make-</code>.</p>
+
+    <p>A <code>&lang;record clause&rang;</code> is as for
+      the <code>define-record-type</code> syntax except that only
+      a <code>parent</code> and a <code>protocol</code> clause is
+      allowed.</p>
+
+    <p><i>Semantics:</i> If <code>&lang;record type&rang;</code> is
+      bound to a record name (e.g. by a
+      previous <code>define-record-type</code>
+      or <code>define-record-name</code> definition),
+      let <var>rd</var> be the underlying record descriptor.
+      Otherwise, <code>&lang;record type&rang;</code> must evaluate to
+      a record descriptor <var>rd</var>.</p>
+
+    <p>This definition binds the <code>&lang;record name&rang;</code>
+      to a record name as defined in the description of
+      the <code>define-record-type</code> definition.  The underlying
+      record descriptor is one whose underlying simple record-type
+      descriptor is the simple record-type descriptor underlying <var>rd</var> and
+      whose underlying parent descriptor is the record descriptor of
+      the parent, or the underlying parent descriptor
+      of <var>rd</var>.
+
+    <p>The <code>protocol</code> clause specifies the constructor
+      descriptor of the record descriptor
+      underlying <code>&lang;record name&rang;</code>.</p>
+
     <p><code>(record-type-descriptor &lang;record name&rang;)</code></p>
 
     <p>Equivalent to the syntax with the same name in
@@ -471,7 +590,9 @@
     <p>Equivalent to the procedure with the latter name in
       R<sup>6</sup>RS.  The underlying simple record-type descriptor
       of the returned record descriptor is the underlying simple
-      record-type descriptor of <code><var>rtd</var></code>.</p>
+      record-type descriptor of <code><var>rtd</var></code>.  The
+      underlying parent descriptor of the record descriptor is
+      the <code><var>parent-descriptor</var></code>.</p>
 
     <p>The name <code>make-record-constructor-descriptor</code> is
         deprecated.</p>
@@ -485,6 +606,10 @@
     <p><code>(record-descriptor-rtd <var>rd</var>)</code></p>
 
     <p>Returns the underlying simple record-type descriptor of <code>rd</code>.</p>
+
+    <p><code>(record-descriptor-parent <var>rd</var>)</code></p>
+
+    <p>Returns the underlying parent record descriptor of <code>rd</code>.</p>
 
     <p><code>(record-descriptor? <var>obj</var>)</code></p>
     <p><code>(record-constructor-descriptor? <var>obj</var>)</code></p>

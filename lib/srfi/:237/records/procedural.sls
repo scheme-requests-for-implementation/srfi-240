@@ -28,6 +28,7 @@
 	  make-record-descriptor
 	  make-record-constructor-descriptor
 	  record-descriptor-rtd
+          record-descriptor-parent
 	  record-descriptor?
 	  record-constructor-descriptor?
 	  record-constructor

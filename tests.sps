@@ -23,7 +23,8 @@
 ;; SOFTWARE.
 
 (import (rnrs base (6))
-	(srfi :237))
+	(srfi :237)
+        (example dictionary))
 
 (define-record-type foo
   (make-foo x)
@@ -75,6 +76,8 @@
                     (foo-set-y! bar 7)
                     (foo-y bar))))
 
+;;; Inheritance
+
 (define-record-type rec1
   (fields a)
   (protocol
@@ -99,6 +102,68 @@
    (lambda (n)
      (lambda (c)
        ((n c c) c)))))
+
+;;; Multiple constructors
+
+(define-record-type fish
+  (fields name))
+
+(define-record-name (salmon fish)
+  (protocol
+   (lambda (p)
+     (lambda ()
+       (p 'salmon)))))
+
+(assert (equal? 'salmon (fish-name (make-salmon))))
+
+(define-record-type colored-salmon
+  (parent salmon)
+  (fields color)
+  (protocol
+   (lambda (n)
+     (lambda (c)
+       ((n) c)))))
+
+(define-record-name (green-salmon colored-salmon)
+  (protocol
+   (lambda (n)
+     (lambda ()
+       ((n) 'green)))))
+
+(assert (equal? 'green (colored-salmon-color (make-green-salmon))))
+
+(define-record-name (blue-salmon colored-salmon)
+  (parent fish)
+  (protocol
+   (lambda (n)
+     (lambda ()
+       ((n 'salmon) 'blue)))))
+
+(assert (equal? 'blue (colored-salmon-color (make-blue-salmon))))
+
+;;; Dictionary example
+
+(define-record-type owned-dictionary
+  (parent dictionary)
+  (fields owner)
+  (protocol
+   (lambda (n)
+     (lambda args
+       (assert #f)))))
+
+(define-record-name (owned-dictionary-from-hashtable owned-dictionary)
+  (parent dictionary-from-hashtable)
+  (protocol
+   (lambda (n)
+     (lambda (ht owner)
+       ((n ht) owner)))))
+
+(define-record-name (owned-dictionary-from-alist owned-dictionary)
+  (parent dictionary-from-alist)
+  (protocol
+   (lambda (n)
+     (lambda (alist owner)
+       ((n alist) owner)))))
 
 ;; Local Variables:
 ;; mode: scheme

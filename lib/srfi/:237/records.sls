@@ -24,6 +24,7 @@
 
 (library (srfi :237 records)
   (export define-record-type
+          define-record-name
 	  fields
 	  mutable
 	  immutable
@@ -40,6 +41,7 @@
 	  make-record-descriptor
 	  make-record-constructor-descriptor
 	  record-descriptor-rtd
+          record-descriptor-parent
 	  record-descriptor?
 	  record-constructor-descriptor?
 	  record-constructor
@@ -75,7 +77,7 @@
 
   (rnrs:define-record-type rd
     (nongenerative) (opaque #t) (sealed #t)
-    (fields rtd cd))
+    (fields rtd cd parent))
 
   (define record-type-descriptor?
     (lambda (obj)
@@ -98,11 +100,17 @@
 	  rtd
 	  (rd-rtd rtd))))
 
+  (define rnrs:rtd*
+    (lambda (rtd)
+      (and rtd (rnrs:rtd rtd))))
+
   (define rnrs:cd
     (lambda (rd)
-      (unless (record-descriptor? rd)
-	(assertion-violation #f "not a record descriptor" rd))
-      (rd-cd rd)))
+      (and rd
+	   (begin
+	     (unless (record-descriptor? rd)
+	       (assertion-violation #f "not a record descriptor" rd))
+	     (rd-cd rd)))))
 
   (define make-record-type-descriptor
     (lambda (name parent uid sealed? opaque? fields)
@@ -112,7 +120,8 @@
     (case-lambda
       [(rtd parent-descriptor protocol)
        (make-rd (rnrs:rtd rtd)
-		(rnrs:make-record-constructor-descriptor (rnrs:rtd rtd) (rnrs:cd parent-descriptor) protocol))]
+		(rnrs:make-record-constructor-descriptor (rnrs:rtd rtd) (rnrs:cd parent-descriptor) protocol)
+		parent-descriptor)]
       [(name parent uid sealed? opaque? fields protocol)
        (make-record-descriptor (make-record-type-descriptor name parent uid sealed? opaque? fields)
 			       parent protocol)]))
@@ -127,6 +136,13 @@
       (unless (record-descriptor? rd)
 	(assertion-violation who "not a record descriptor" rd))
       (rd-rtd rd)))
+
+  (define record-descriptor-parent
+    (lambda (rd)
+      (define who 'record-descriptor-rtd)
+      (unless (record-descriptor? rd)
+	(assertion-violation who "not a record descriptor" rd))
+      (rd-parent rd)))
 
   (define record-constructor
     (lambda (rd)
@@ -187,10 +203,63 @@
     (lambda (rtd k)
       (rnrs:record-field-mutable? (rnrs:rtd rtd) k)))
 
+  (define assert-protocol
+    (lambda (obj)
+      (unless (procedure? obj)
+        (assertion-violation #f "protocol must be a procedure" obj))
+      obj))
+
+  (define-syntax define-record-name
+    (lambda (stx)
+      (define who 'define-record-name)
+      (define parse-constructor-clauses
+        (lambda (record-name clauses)
+          (let f ([clauses clauses] [parent* '()] [protocol* '()])
+            (if (null? clauses)
+                (list (if (pair? parent*)
+                          (car parent*)
+			  (with-syntax ([record-name record-name])
+			    #'(record-descriptor-parent record-name)))
+                      (if (pair? protocol*)
+                          (with-syntax ([expr (car protocol*)])
+                            #'(assert-protocol expr))
+                          #f))
+                (let ([clause (car clauses)] [clauses (cdr clauses)])
+                  (syntax-case clause (parent protocol)
+                    [(parent name)
+                     (identifier? #'name)
+                     (if (null? parent*)
+                         (f clauses (list #'name) protocol*)
+                         (syntax-violation "duplicate parent clause" stx clause))]
+                    [(protocol expr)
+                     (if (null? protocol*)
+                         (f clauses parent* (list #'expr))
+                         (syntax-violation "duplicate protocol clause" stx clause))]
+                    [_ (syntax-violation who "invalid record clause" stx clause)]))))))
+      (syntax-case stx ()
+	[(k (record-name record-type) record-clause ...)
+	 (and (identifier? #'record-name)
+	      (identifier? #'record-type))
+	 (with-syntax ([constructor-name
+			(datum->syntax #'k (string->symbol (string-append "make-" (symbol->string (syntax->datum #'record-name)))))])
+	   #'(define-record-name (record-name record-type constructor-name) record-clause ...))]
+        [(_ (record-name record-type constructor-name) record-clause ...)
+         (and (identifier? #'record-name)
+	      (identifier? #'record-type)
+              (identifier? #'constructor-name))
+         (with-syntax ([(parent protocol)
+                        (parse-constructor-clauses #'record-type #'(record-clause ...))])
+           #'(begin
+	       (define rd
+                 (make-record-descriptor record-type parent protocol))
+               (define-rn record-name rd)
+	       (define constructor-name (record-constructor record-name))))]
+        [_
+         (syntax-violation who "invalid record name definition" stx)])))
+
   (define-syntax define-record-type
     (lambda (stx)
       (define who 'define-record-type)
-
       (define distinct-identifiers?
         (lambda (id*)
           (let f ((id* id*))
@@ -262,20 +331,23 @@
 	    (syntax-case clause (fields parent parent-rtd)
 	      [(fields field-spec ...)
 	       (with-syntax ([(field-spec ...) (map update-field-spec #'(field-spec ...))])
-		 #'(fields field-spec ...))]
+		 #'((fields field-spec ...)))]
 	      [(parent name)
 	       (identifier? #'name)
 	       (cond
 		[(lookup #'name #'rnrs:record-name) =>
 		 (lambda (record-name)
 		   (with-syntax ([record-name record-name])
-		     #'(parent record-name)))]
+		     #'((define parent-rd name)
+			(parent record-name))))]
 		[else
-		 #'(parent-rtd (rnrs:rtd name) (rnrs:cd name))])]
+		 #'((define parent-rd name)
+		    (parent-rtd (rnrs:rtd name) (rnrs:cd parent-rd)))])]
 	      [(parent-rtd rtd-expr cd-expr)
-	       #'(parent-rtd (rnrs:rtd rtd-expr) (rnrs:cd cd-expr))]
-	      [_
-	       clause])))
+	       #'((define parent-rd cd-expr)
+		  (parent-rtd (rnrs:rtd* rtd-expr) (rnrs:cd parent-rd)))]
+	      [clause
+	       #'(clause)])))
 	(syntax-case stx ()
           [(_ name (constructor-name field-name ...) pred field ...)
            (and (identifier? #'name)
@@ -321,31 +393,39 @@
           [(k name-spec record-clause ...)
 	   (with-syntax ([(record-name name-spec) (update-name-spec #'k #'name-spec)])
 	     (define prefix (symbol->string (syntax->datum #'record-name)))
-	     (with-syntax ([(record-clause ...) (map (lambda (clause)
-						       (update-record-clause #'k prefix clause))
-						     #'(record-clause ...))])
-	       #'(define-record-type-aux record-name name-spec record-clause ...)))]
+	     (with-syntax ([((def ... record-clause) ...) (map (lambda (clause)
+								 (update-record-clause #'k prefix clause))
+							       #'(record-clause ...))])
+	       #'(define-record-type-aux record-name (def ... ...) parent-rd name-spec record-clause ...)))]
           [_
            (syntax-violation who "invalid record-type definition" stx)]))))
 
   (define rnrs:record-name)
 
+  (define-syntax define-rn
+    (syntax-rules ()
+      [(define-rn name rd)
+       (define-syntax name
+	 (lambda (stx)
+	   (syntax-case stx ()
+	     [k
+	      (identifier? #'k)
+	      #'rd]
+	     [_
+	      (syntax-violation 'record-name "invalid use of record name" stx)])))]))
+
   (define-syntax define-record-type-aux
     (syntax-rules ()
-      [(_ record-name (tmp-name constructor-name predicate-name) record-clause ...)
+      [(_ record-name () parent-rd (tmp-name constructor-name predicate-name) record-clause ...)
+       (define-record-type-aux record-name ((define parent-rd #f)) parent-rd (tmp-name constructor-name predicate-name) record-clause ...)]
+      [(_ record-name (def ...) parent-rd (tmp-name constructor-name predicate-name) record-clause ...)
        (begin
+	 def ...
 	 (rnrs:define-record-type (tmp-name constructor-name predicate-name) record-clause ...)
 	 (define rtd (rnrs:record-type-descriptor tmp-name))
 	 (define cd (rnrs:record-constructor-descriptor tmp-name))
-	 (define rd (make-rd rtd cd))
-	 (define-syntax record-name
-	   (lambda (stx)
-	     (syntax-case stx ()
-	       [k
-		(identifier? #'k)
-		#'rd]
-	       [_
-		(syntax-violation 'record-name "invalid use of record name" stx)])))
+	 (define rd (make-rd rtd cd parent-rd))
+         (define-rn record-name rd)
 	 (define-property record-name rnrs:record-name #'tmp-name))]))
 
   (define-syntax record-type-descriptor
