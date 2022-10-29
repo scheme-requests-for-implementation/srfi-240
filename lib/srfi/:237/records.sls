@@ -300,31 +300,6 @@
 			 #'predicate-name))]
 	    [_
 	     (syntax-violation who "invalid name spec" stx spec)])))
-      #;
-      (define parse-constructor-clauses
-        (lambda (record-name clauses)
-          (let f ([clauses clauses] [parent* '()] [protocol* '()])
-            (if (null? clauses)
-                (list (if (pair? parent*)
-                          (car parent*)
-			  (with-syntax ([record-name record-name])
-			    #'(record-descriptor-parent record-name)))
-                      (if (pair? protocol*)
-                          (with-syntax ([expr (car protocol*)])
-                            #'(assert-protocol expr))
-                          #f))
-                (let ([clause (car clauses)] [clauses (cdr clauses)])
-                  (syntax-case clause (parent protocol)
-                    [(parent name)
-                     (identifier? #'name)
-                     (if (null? parent*)
-                         (f clauses (list #'name) protocol*)
-                         (syntax-violation "duplicate parent clause" stx clause))]
-                    [(protocol expr)
-                     (if (null? protocol*)
-                         (f clauses parent* (list #'expr))
-                         (syntax-violation "duplicate protocol clause" stx clause))]
-                    [_ (syntax-violation who "invalid record clause" stx clause)]))))))
       (lambda (lookup)
 	(define update-record-clause
 	  (lambda (k prefix clause)
@@ -414,24 +389,6 @@
                     (lambda (p)
                       (lambda (tmp ...)
 			(p init ...)))))))]
-          #;
-	  [(k (template record-name) record-clause ...)
-	   (and (identifier? #'record-name)
-		(identifier? #'template))
-	   (with-syntax ([constructor-name
-			  (datum->syntax #'k (string->symbol (string-append "make-" (symbol->string (syntax->datum #'record-name)))))])
-	     #'(define-record-type ((template record-name) constructor-name) record-clause ...))]
-          #;
-          [(_ ((template record-name) constructor-name) record-clause ...)
-           (and (identifier? #'record-name)
-		(identifier? #'template)
-                (identifier? #'constructor-name))
-           (with-syntax ([(parent protocol)
-                          (parse-constructor-clauses #'template #'(record-clause ...))])
-             #'(begin
-		 (define record-name
-                   (make-record-descriptor template parent protocol))
-		 (define constructor-name (record-constructor record-name))))]
           [(k name-spec record-clause ...)
 	   (with-syntax ([(record-name name-spec) (update-name-spec #'k #'name-spec)])
 	     (define prefix (symbol->string (syntax->datum #'record-name)))
