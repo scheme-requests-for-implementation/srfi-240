@@ -398,7 +398,9 @@
 
     <p>The library exports the auxiliary
       syntax <code>fields</code>, <code>mutable</code>, <code>immutable</code>, <code>parent</code>, <code>protocol</code>, <code>sealed</code>, <code>opaque</code>, <code>nongenerative</code>, <code>parent-rtd</code>
-      identical to the exports by the same name of <code>(rnrs records syntactic (6))</code>.</p>
+      identical to the exports by the same name of <code>(rnrs records
+      syntactic (6))</code>.  It also exports the auxiliary
+      syntax <code>generative</code>.</p>
 
     <p>An R<sup>7</sup>RS system supporting this SRFI should provide
       the <code>define-record-type</code> syntax also in
@@ -448,6 +450,34 @@
       R<sup>6</sup>RS syntactic layer.</p>
 
     <p>The <code>parent-rtd</code> clause is deprecated.</p>
+
+    <p>A clause of the <code>(generative)</code> specifies that the
+      record type is generative.  This clause is mutually exclusive to
+      a <code>non-generative</code> clause.</p>
+
+    <p><i>Note:</i> While this clause is superfluous as its absence
+      (and the absence of a <code>non-generative</code> clause) also
+      specifies that the record type is generative, it makes it
+      sensible to encourage implementations to raise a continuable
+      exception of type <code>&warning</code> when
+      a <code>define-record-type</code> with neither
+      a <code>generative</code> nor <code>non-generative</code> clause
+      is expanded.  This helps detecting accidental specifications of generative record types.</p>
+
+    <p><i>Note:</i> An implementation is also encouraged to raise a
+      continuable exception of type <code>&warning</code> when
+      a <code>non-generative</code> clause without
+      a <code>&lang;uid&rang;</code> is specified as such record types
+      are not compatible across different expansions of
+      a <code>define-record-type</code> form, e.g. when a library is
+      visited more than once.</p>
+
+    <p><i>Remark:</i> In Chez Scheme, the equivalent of the
+      clause <code>(generative)</code> is a clause of the
+      form <code>(nongenerative #f)</code>.  This syntax is not used
+      in this SRFI to avoid double-negation and misunderstanding
+      because <code>#f</code> often stands for a default value, which,
+      in this context, could be a generate uid.</p>
 
     <p><code>(define-record-type &lang;name&rang;
         (&lang;constructor name&rang; &lang;field name&rang; &hellip;)
