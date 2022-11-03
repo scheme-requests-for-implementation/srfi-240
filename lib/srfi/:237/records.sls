@@ -296,6 +296,14 @@
 		     (list (datum->syntax #'* name)
 			   (datum->syntax k (string->symbol (string-append "make-" (symbol->string name))))
 			   (datum->syntax k (string->symbol (string-append (symbol->string name) "?"))))))]
+            [(rtd-name record-name)
+	     (and (identifier? #'rtd-name)
+                  (identifier? #'record-name))
+	     (let ([name (syntax->datum #'rtd-name)])
+	       (list #'record-name
+		     (list (datum->syntax #'* name)
+			   (datum->syntax k (string->symbol (string-append "make-" (symbol->string name))))
+			   (datum->syntax k (string->symbol (string-append (symbol->string name) "?"))))))]
 	    [(name constructor-name predicate-name)
 	     (and (identifier? #'name)
 		  (identifier? #'constructor-name)
@@ -304,6 +312,15 @@
 		   (list (datum->syntax #'* (syntax->datum #'name))
 			 #'constructor-name
 			 #'predicate-name))]
+            [(rtd-name record-name constructor-name predicate-name)
+             (and (identifier? #'rtd-name)
+                  (identifier? #'record-name)
+                  (identifier? #'constructor-name)
+                  (identifier? #'predicate-name))
+             (list #'record-name
+                   (list (datum->syntax #'* (syntax->datum #'rtd-name))
+                         #'constructor-name
+                         #'predicate-name))]
 	    [_
 	     (syntax-violation who "invalid name spec" stx spec)])))
       (lambda (lookup)

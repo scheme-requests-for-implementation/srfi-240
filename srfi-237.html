@@ -59,8 +59,7 @@
 	  of the SRFI 9 syntax.</p></li>
       <li><p>Define a datum syntax for records of a nongenerative,
           non-opaque record type.</p></li>
-      <li><p>Allow a different name for the record-type instead of the
-          symbolic name of the identifier the record name is bound to.</p></li>
+      <li><p>Add syntactic sugar for defining constructors.</p></li>
     </ul>
 
     <h2 id="rationale">Rationale</h2>
@@ -432,6 +431,18 @@
 
     <p><i>Note:</i> R<sup>6</sup>RS allows that <code>&lang;record
         name&rang;</code> is bound to an expand-time or run-time representation.</p>
+
+    <p>The <code>&lang;name spec&rang;</code> can also be of the
+      form <code>(&lang;rtd name&rang; &lang;record name&rang;
+        &lang;constructor name&rang; &lang;predicate
+        name&rang;)</code> or <code>(&lang;rtd name&rang; &lang;record
+        name&rang;)</code>.  In these cases, <code>&lang;rtd
+        name&rang;</code>, instead <code>&lang;record
+        name&rang;</code>, taken as a symbol, becomes the name of the
+      record type.  The second form is an abbreviation for the first
+      form where the constructor and the predicate name is derived
+      from the <code>&lang;rtd name&rang;</code>, instead of
+      the <code>&lang;record name&rang;</code>.</p>
 
     <p>In a <code>parent</code> clause, the <code>&lang;parent
       name&rang;</code> can be either a record name or an expression

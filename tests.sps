@@ -108,6 +108,13 @@
 (define-record-type gen
   (generative))
 
+;;; Different symbolic name
+
+(define-record-type (sname rname))
+
+(assert (sname? (make-sname)))
+(assert (record-descriptor? rname))
+
 ;;; Multiple constructors
 
 (define-record-type fish
