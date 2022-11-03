@@ -103,6 +103,11 @@
      (lambda (c)
        ((n c c) c)))))
 
+;;; Generative clause
+
+(define-record-type gen
+  (generative))
+
 ;;; Multiple constructors
 
 (define-record-type fish

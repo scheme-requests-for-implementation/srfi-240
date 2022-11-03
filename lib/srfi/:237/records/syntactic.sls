@@ -33,6 +33,7 @@
 	  sealed
 	  opaque
 	  nongenerative
+          generative
 	  parent-rtd
 	  record-type-descriptor
 	  record-constructor-descriptor)

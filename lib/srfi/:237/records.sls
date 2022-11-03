@@ -33,6 +33,7 @@
 	  sealed
 	  opaque
 	  nongenerative
+          generative
 	  parent-rtd
 	  record-type-descriptor
 	  record-constructor-descriptor
@@ -74,6 +75,10 @@
 		parent-rtd)
 	  (prefix (rnrs (6)) rnrs:)
 	  (srfi :213))
+
+  (define-syntax generative
+    (lambda (stx)
+      (syntax-violation 'generative "invalid use of auxiliary syntax" stx)))
 
   (rnrs:define-record-type rd
     (nongenerative) (opaque #t) (sealed #t)
@@ -302,8 +307,8 @@
 	    [_
 	     (syntax-violation who "invalid name spec" stx spec)])))
       (lambda (lookup)
-	(define update-record-clause
-	  (lambda (k prefix clause)
+	(define update-record-clauses
+	  (lambda (k prefix clauses)
 	    (define update-field-spec
 	      (lambda (field-spec)
 		(syntax-case field-spec (immutable mutable)
@@ -328,26 +333,45 @@
 				    (datum->syntax k (string->symbol (string-append prefix "-" name)))])
 		       #'(immutable field-name accessor-name)))]
 		  [_ field-spec])))
-	    (syntax-case clause (fields parent parent-rtd)
-	      [(fields field-spec ...)
-	       (with-syntax ([(field-spec ...) (map update-field-spec #'(field-spec ...))])
-		 #'((fields field-spec ...)))]
-	      [(parent name)
-	       (identifier? #'name)
-	       (cond
-		[(lookup #'name #'rnrs:record-name) =>
-		 (lambda (record-name)
-		   (with-syntax ([record-name record-name])
-		     #'((define parent-rd name)
-			(parent record-name))))]
-		[else
-		 #'((define parent-rd name)
-		    (parent-rtd (rnrs:rtd name) (rnrs:cd parent-rd)))])]
-	      [(parent-rtd rtd-expr cd-expr)
-	       #'((define parent-rd cd-expr)
-		  (parent-rtd (rnrs:rtd* rtd-expr) (rnrs:cd parent-rd)))]
-	      [clause
-	       #'(clause)])))
+            (let f ([clauses clauses] [transformed '()] [gen #f])
+              (if (null? clauses)
+                  transformed
+                  (let ([clause (car clauses)] [clauses (cdr clauses)])
+                    (define g
+                      (lambda (clause)
+                        (f clauses (cons clause transformed) gen)))
+                    (syntax-case clause (fields parent parent-rtd nongenerative generative)
+	              [(fields field-spec ...)
+	               (with-syntax ([(field-spec ...) (map update-field-spec #'(field-spec ...))])
+		         (g #'((fields field-spec ...))))]
+	              [(parent name)
+	               (identifier? #'name)
+	               (g (cond
+		           [(lookup #'name #'rnrs:record-name) =>
+		            (lambda (record-name)
+		              (with-syntax ([record-name record-name])
+		                #'((define parent-rd name)
+			           (parent record-name))))]
+		           [else
+		            #'((define parent-rd name)
+		               (parent-rtd (rnrs:rtd name) (rnrs:cd parent-rd)))]))]
+	              [(parent-rtd rtd-expr cd-expr)
+	               (g #'((define parent-rd cd-expr)
+		             (parent-rtd (rnrs:rtd* rtd-expr) (rnrs:cd parent-rd))))]
+                      [(nongenerative . args)
+                       (if (eq? gen 'generative)
+                           (syntax-violation who "nongenerative and generative clauses are mutally exclusive" stx clause)
+                           (f clauses (cons (list clause) transformed) 'nongenerative))]
+                      [(generative)
+                       (case gen
+                         [(generative)
+                          (syntax-violation who "duplicate generative clause" stx clause)]
+                         [(nongenerative)
+                          (syntax-violation who "nongenerative and generative clauses are mutally exclusive" stx clause)]
+                         [else
+                          (f clauses transformed 'generative)])]
+	              [clause
+	               (g #'(clause))]))))))
 	(syntax-case stx ()
           [(_ name (constructor-name field-name ...) pred field ...)
            (and (identifier? #'name)
@@ -393,9 +417,8 @@
           [(k name-spec record-clause ...)
 	   (with-syntax ([(record-name name-spec) (update-name-spec #'k #'name-spec)])
 	     (define prefix (symbol->string (syntax->datum #'record-name)))
-	     (with-syntax ([((def ... record-clause) ...) (map (lambda (clause)
-								 (update-record-clause #'k prefix clause))
-							       #'(record-clause ...))])
+	     (with-syntax ([((def ... record-clause) ...)
+                            (update-record-clauses #'k prefix #'(record-clause ...))])
 	       #'(define-record-type-aux record-name (def ... ...) parent-rd name-spec record-clause ...)))]
           [_
            (syntax-violation who "invalid record-type definition" stx)]))))
