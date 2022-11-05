@@ -164,9 +164,9 @@
   (fields (immutable x foo-x)
           (mutable y foo-y foo-set-y!))
   (protocol
-    (lambda (p)
+    (lambda (new)
       (lambda (x)
-        (p x (if #f #f))))))</pre>
+        (new x (if #f #f))))))</pre>
 
     <h2 id="specification">Specification</h2>
 
@@ -262,8 +262,9 @@
 
     <p>The following example program runs without an error.</p>
 
-    <pre>(import (except (rnrs (6)) define-record-type)
-	(srfi :240 records))
+    <pre>(import (rnrs base (6))
+        (except (srfi :237 records) define-record-type)
+	(srfi :240 define-record-type))
 
 (define-record-type foo
   (make-foo x)

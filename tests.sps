@@ -23,8 +23,8 @@
 ;; SOFTWARE.
 
 (import (rnrs base (6))
-	(srfi :237)
-        (example dictionary))
+        (except (srfi :237) define-record-type)
+	(srfi :240))
 
 (define-record-type foo
   (make-foo x)
@@ -152,30 +152,6 @@
        ((n 'salmon) 'blue)))))
 
 (assert (equal? 'blue (colored-salmon-color (make-blue-salmon))))
-
-;;; Dictionary example
-
-(define-record-type owned-dictionary
-  (parent dictionary)
-  (fields owner)
-  (protocol
-   (lambda (n)
-     (lambda args
-       (assert #f)))))
-
-(define-record-name (owned-dictionary-from-hashtable owned-dictionary)
-  (parent dictionary-from-hashtable)
-  (protocol
-   (lambda (n)
-     (lambda (ht owner)
-       ((n ht) owner)))))
-
-(define-record-name (owned-dictionary-from-alist owned-dictionary)
-  (parent dictionary-from-alist)
-  (protocol
-   (lambda (n)
-     (lambda (alist owner)
-       ((n alist) owner)))))
 
 ;; Local Variables:
 ;; mode: scheme

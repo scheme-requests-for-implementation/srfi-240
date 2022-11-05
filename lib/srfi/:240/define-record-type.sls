@@ -66,82 +66,6 @@
                                "invalid field spec"
                                stx
                                field)])))
-      (define update-name-spec
-	(lambda (k spec)
-	  (syntax-case spec ()
-	    [name
-	     (identifier? #'name)
-	     (let ([name (syntax->datum #'name)])
-	       (list spec
-		     spec
-		     (datum->syntax k (string->symbol (string-append "make-" (symbol->string name))))
-		     (datum->syntax k (string->symbol (string-append (symbol->string name) "?")))))]
-            [(rtd-name record-name)
-	     (and (identifier? #'rtd-name)
-                  (identifier? #'record-name))
-	     (let ([name (syntax->datum #'rtd-name)])
-	       (list #'rtd-name
-		     #'record-name
-		     (datum->syntax k (string->symbol (string-append "make-" (symbol->string name))))
-		     (datum->syntax k (string->symbol (string-append (symbol->string name) "?")))))]
-	    [(name constructor-name predicate-name)
-	     (and (identifier? #'name)
-		  (identifier? #'constructor-name)
-		  (identifier? #'predicate-name))
-	     (list #'name
-		   #'name
-		   #'constructor-name
-		   #'predicate-name)]
-            [(rtd-name record-name constructor-name predicate-name)
-             (and (identifier? #'rtd-name)
-                  (identifier? #'record-name)
-                  (identifier? #'constructor-name)
-                  (identifier? #'predicate-name))
-             (list #'rtd-name
-		   #'record-name
-                   #'constructor-name
-                   #'predicate-name)]
-	    [_
-	     (syntax-violation who "invalid name spec" stx spec)])))
-      (define update-record-clauses
-	(lambda (k prefix clauses)
-	  (define update-field-spec
-	    (lambda (field-spec)
-	      (syntax-case field-spec (immutable mutable)
-		[(immutable field-name)
-		 (identifier? #'field-name)
-		 (let ([name (symbol->string (syntax->datum #'field-name))])
-		   (with-syntax ([accessor-name
-				  (datum->syntax k (string->symbol (string-append prefix name)))])
-		     #'(immutable field-name accessor-name)))]
-		[(mutable field-name)
-		 (identifier? #'field-name)
-		 (let ([name (symbol->string (syntax->datum #'field-name))])
-		   (with-syntax ([accessor-name
-				  (datum->syntax k (string->symbol (string-append prefix "-" name)))]
-				 [mutator-name
-				  (datum->syntax k (string->symbol (string-append prefix "-" name "-set!")))])
-		     #'(mutable field-name accessor-name mutator-name)))]
-		[field-name
-		 (identifier? #'field-name)
-		 (let ([name (symbol->string (syntax->datum #'field-name))])
-		   (with-syntax ([accessor-name
-				  (datum->syntax k (string->symbol (string-append prefix "-" name)))])
-		     #'(immutable field-name accessor-name)))]
-		[_ field-spec])))
-          (let f ([clauses clauses] [transformed '()] [gen #f])
-            (if (null? clauses)
-                transformed
-                (let ([clause (car clauses)] [clauses (cdr clauses)])
-                  (define g
-                    (lambda (clause)
-                      (f clauses (cons clause transformed) gen)))
-                  (syntax-case clause (fields parent parent-rtd nongenerative generative)
-	            [(fields field-spec ...)
-	             (with-syntax ([(field-spec ...) (map update-field-spec #'(field-spec ...))])
-		       (g #'((fields field-spec ...))))]
-	            [clause
-	             (g #'(clause))]))))))
       (syntax-case stx ()
         [(_ name (constructor-name field-name ...) pred field ...)
          (and (identifier? #'name)
@@ -184,12 +108,8 @@
                   (lambda (p)
                     (lambda (tmp ...)
 		      (p init ...)))))))]
-        [(k name-spec record-clause ...)
-	 (with-syntax ([(record-name . name-spec) (update-name-spec #'k #'name-spec)])
-	   (define prefix (symbol->string (syntax->datum #'record-name)))
-	   (with-syntax ([(record-clause ...)
-                          (update-record-clauses #'k prefix #'(record-clause ...))])
-	     #'(:237:define-record-type (record-name . name-spec) record-clause ...)))]
+        [(_ name-spec record-clause ...)
+	 #'(:237:define-record-type name-spec record-clause ...)]
         [_
          (syntax-violation who "invalid record-type definition" stx)])))
 
