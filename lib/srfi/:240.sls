@@ -22,20 +22,19 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(library (srfi :237 records procedural)
-  (export make-record-type-descriptor
-	  record-type-descriptor?
-	  make-record-descriptor
-	  make-record-constructor-descriptor
-	  record-descriptor-rtd
-          record-descriptor-parent
-	  record-descriptor?
-	  record-constructor-descriptor?
-	  record-constructor
-	  record-predicate
-	  record-accessor
-	  record-mutator)
-  (import (srfi :237 records)))
+(library (srfi :240)
+  (export define-record-type
+	  fields
+	  mutable
+	  immutable
+	  parent
+	  protocol
+	  sealed
+	  opaque
+	  nongenerative
+          generative
+	  parent-rtd)
+  (import (srfi :240 define-record-type)))
 
 ;; Local Variables:
 ;; mode: scheme

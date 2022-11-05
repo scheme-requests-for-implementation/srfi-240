@@ -1,3 +1,6 @@
 [submodule "srfi-213"]
 	path = srfi-213
 	url = git@github.com:scheme-requests-for-implementation/srfi-213.git
+[submodule "srfi-237"]
+	path = srfi-237
+	url = git@github.com:scheme-requests-for-implementation/srfi-237.git
