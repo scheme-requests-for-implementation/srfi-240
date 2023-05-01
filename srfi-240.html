@@ -68,7 +68,7 @@
           the large.</p>
       </li>
       <li>
-        <p>The proposed semantics is not compatible with
+        <p>The proposed semantics are not compatible with
           R<sup>7</sup>RS field names interpreted as (hygienic)
           identifiers.</p>
       </li>
@@ -78,7 +78,7 @@
       </li>
     </ul>
 
-    <p>This SRFI therefore proposes to adopt the established and
+    <p>This SRFI therefore proposes adoption of the established and
       widely used R<sup>6</sup>RS record system for R<sup>7</sup>RS.
       For this, the <code>define-record-type</code> form of R<sup>7</sup>RS is extended (see below).</p>
 
@@ -87,12 +87,12 @@
     <ul>
       <li>
         <p>R<sup>7</sup>RS gets a record-type facility as powerful
-          as the R<sup>6</sup>RS record-type facility including
-          single-inheritance, a procedural interface, and
+          as the R<sup>6</sup>RS record-type facility, including
+          single inheritance, a procedural interface, and
           inspection.</p>
       </li>
       <li>
-        <p>Porting code and sharing specifications between R<sup>6</sup>RS and R<sup>7</sup>RS becomes simplified.</p>
+        <p>Porting code and sharing specifications between R<sup>6</sup>RS and R<sup>7</sup>RS is simplified.</p>
       </li>
       <li>
         <p>Scheme systems supporting both R<sup>6</sup>RS and
@@ -126,19 +126,19 @@
         <p>The procedural layer is intended to be used when record
           types have to be constructed at runtime, e.g. by
           interpreters that need to construct host-compatible record
-          types.  The procedural layer much like the inspection layer
-          is therefore not needed for most code.  Therefore, a vast
+          types.  The procedural layer, much like the inspection layer,
+          is therefore not needed for most code.  Therefore, the vast
           majority of programmers can ignore the procedural layer.</p>
 	<p>This is strengthened by SRFI 237, which
 	  removes the restriction that the syntactic layer can only define
 	  one constructor per record type defined.</p>
       </li>
       <li>
-        <p>The syntactic and the procedural layer are compatible and a
+        <p>The syntactic and the procedural layer are compatible, and a
           syntactically defined record type can inherit from a
           procedurally defined record type, and vice versa.  Whether a
           record type has been defined syntactically or procedurally
-          is generally unobservable.  To inherit from a record type
+          is generally unobservable.  To inherit from a record type,
           all that has to be exposed from it is either the (bound)
           record name or the record type descriptor (with or without a
           record constructor descriptor).</p>
@@ -150,7 +150,8 @@
 
     <h3>Examples</h3>
 
-    <p>Both of the following record type definitions are allowed with the syntax provided by this SRFI and are equivalent:</p>
+    <p>Both of the following record type definitions are allowed with
+    the syntax provided by this SRFI, and are equivalent:</p>
 
     <pre>(define-record-type foo
   (make-foo x)
@@ -216,7 +217,7 @@
     <p>It is an error for the same identifier to occur more than once
       as a field name.</p>
 
-    <p><i>Semantics:</i> A new non sealed, non opaque and generative
+    <p><i>Semantics:</i> A new non-sealed, non-opaque and generative
       base record type is generated, and the form expands into a set
       of definitions in the environment where
       the <code>define-record-type</code> form appears.</p>
@@ -224,7 +225,7 @@
     <p>The record type has as many fields as there
       are <code>&lang;fields&rang;</code>, with the
       given <code>&lang;field names&rang;</code>, in that order.
-      Each <code>&lang;field&rang;</code> if of the first form defines
+      Each <code>&lang;field&rang;</code>, if of the first form, defines
       an immutable field, and a mutable <code>&lang;field&rang;</code> otherwise.</p>
 
     <p><code>&lang;Name&rang;</code> is defined by this definition to
