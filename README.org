@@ -9,7 +9,7 @@ keywords: [[https://srfi.schemers.org/?keywords=data-structure][Data Structure]]
 
 This repository hosts [[https://srfi.schemers.org/srfi-240/][SRFI 240]]: Reconciled Records, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
-This SRFI is in /draft/ status.
+This SRFI is in /final/ status.
 See also [[/srfi-9/][SRFI 9: Defining Record Types]], [[/srfi-57/][SRFI 57: Records]], [[/srfi-76/][SRFI 76: R6RS Records]], [[/srfi-99/][SRFI 99: ERR5RS Records]], [[/srfi-131/][SRFI 131: ERR5RS Record Syntax (reduced)]], [[/srfi-136/][SRFI 136: Extensible record types]], [[/srfi-150/][SRFI 150: Hygienic ERR5RS Record Syntax (reduced)]], and [[/srfi-237/][SRFI 237: R6RS Records (refined)]].
 The full documentation for this SRFI can be found in the [[https://srfi.schemers.org/srfi-240/srfi-240.html][SRFI Document]].
 
